@@ -1,0 +1,222 @@
+---
+title: "Parasitoid-host models with embedded ShinyApps"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019 
+https://github.com/objornstad/oshinys
+
+This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-binomial (May 1978) parasitoid-host model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+
+The app requires the shiny package to be installed to run. 
+```{r}
+require(shiny)
+```
+
+The Nicholson-Bailey (1935) model assumes a population of randomly searching parasitoids, $P$, parasitizing immature stages of their host, $H$. The host growth rate is $R$ and the parasitoid search efficiency is $a$. Given the random search, the fraction of hosts escaping parasitization is $\mbox{exp}(- a P)$ leading to two equations: 
+
+\begin{align}
+H_{t+1} & = \underbrace{R H_t}_{\mbox{reproduction}} \underbrace{e^{-a P_t}}_{\mbox{not parasitized}}\\
+P_{t+1} & =   R H_t  \underbrace{(1-e^{-a P_t}) }_{\mbox{parasitized}}
+\end{align}
+
+Nicholson and Bailey (1935) showed that the equilibrium $H^* = \frac{\mbox{log}(R)}{a (R-1)}, P^* = \frac{\mbox{log}(R)}{a}$" is an unstable focus leading to increasingly violent consumer-resource cycles.
+
+The Nicholson-Bailey shiny app is:
+
+```{r, echo=FALSE}
+# This creates the NB User Interface (UI)
+ui = pageWithSidebar(
+headerPanel("Nicholson-Bailey Model"),
+sidebarPanel(
+sliderInput("R", "Growth rate (R):", 1.1,
+              min = 1, max = 2, step=.01),
+sliderInput("a", "Search efficiency (a):", 0.03,
+              min = 0, max = .5),
+numericInput("P0", "Initial parasitoid:", 10,
+              min = 1, max = 100),
+numericInput("H0", "Initial host:", 20,
+              min = 1, max = 100),
+numericInput("Tmax", "Tmax:", 100,
+              min = 1, max = 500)
+),
+mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotOutput("plot1", height = 500)),
+  tabPanel("Phase plane", plotOutput("plot2", height = 500)),
+  tabPanel("Details",
+    withMathJax(
+            helpText("MODEL:"),
+          helpText("Host $$H_t = R H_{t-1} (1 - \\mbox{exp}(- a P_{t-1}))$$"),
+          helpText("Parasitoid $$P_t = R H_{t-1} \\mbox{exp}(- a P_{t-1})$$"),
+          helpText("Equilibria $$H^* = \\frac{\\mbox{log}(R)}{a (R-1)}, 
+            P^* = \\frac{\\mbox{log}(R)}{a}$$"))),
+          helpText("REFERENCE: Nicholson AJ, Bailey VA (1935) The balance of animal populations. 
+            Proceedings of the Zoological Society of London 3: 551-598")
+)
+)
+)
+
+# This creates the 'behind the scenes' code (Server)
+server = function(input, output) {
+ NB = function(R, a, T = 100, H0 = 10, P0 = 1){
+   #T is length of simulation (number of time-steps)
+   #H0 and P0 are initial numbers
+   #we provide default parameters except for R and a
+
+   H=rep(NA, T) #host series
+   P=rep(NA, T) #parasitoid series
+
+   H[1] = H0 #Initiating the host series
+   P[1] = P0 #Initiating the host series
+
+   for(t in 2:T){
+     H[t] = R * H[t-1] * exp(- a * P[t-1])
+     P[t] = R * H[t-1] * (1-exp(- a * P[t-1]))
+     if(P[t-1]==0) break
+   } #end of loop
+
+   #the two vectors of results are stored in a "list"
+   res= data.frame(H = H, P = P)
+ 
+   #the list is passed out of this function
+   return(res)
+} #end of function
+
+
+
+  output$plot1 <- renderPlot({
+
+    sim= NB(R=input$R, a=input$a, H0=input$H0, P0=input$P0, T=input$Tmax)
+    time = 1:input$Tmax
+
+    plot(time, sim$H, type= "b",xlab = "Generations", ylab = "Abundance", 
+      ylim = range(sim, na.rm=TRUE))
+    points(time, sim$P, type = "b", col = "red")
+     legend("topleft",
+        legend=c("H", "P"),
+        lty=c(1,1),
+        pch=c(1,1),
+        col=c("black", "red"))
+   })
+
+
+  output$plot2 <- renderPlot({
+
+    sim= NB(R=input$R, a=input$a, H0=input$H0, P0=input$P0, T=input$Tmax)
+    time = 1:input$Tmax
+    Hstar=log(input$R)/(input$a*(input$R-1))
+    Pstar=log(input$R)/input$a
+    plot(sim$H, sim$P, type= "b",xlab = "Host", ylab = "Parasitoid")
+    points(Hstar, Pstar, col=2, pch=19)
+   })
+
+}
+  
+shinyApp(ui, server)
+```
+
+May (1978) proposed that heterogeneities in searching can stabilize parasitoid host dynamics. Assuming a negative binomial (rather than Poisson) attack probability the model is:
+\begin{align}
+H_{t+1} & = R H_t (1+\frac{a P_t}{k})^{-k}\\
+P_{t+1} & = R H_t (1-(1+\frac{a P_t}{k})^{-k}),
+\end{align}
+where $k$ is the aggregation parameter ($k \rightarrow \infty$, Neg Bin $\rightarrow$ Poisson). He coined the CV$^2$-rule which says that if the coefficient-of-variation in attack rate is greater than 1, the parasitoid-host dynamics stabilizes; The CV for the negative binomial being $1/\sqrt{k}$. The equilibrium $P^* = k (R^{1/k}-1) /a, H^*=P^* R / (R-1)$ is either stable or unstable depending on whether k is smaller or greater than 1.
+
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui = pageWithSidebar(
+headerPanel("May's Parasitoid-host Model"),
+sidebarPanel(
+sliderInput("R", "Growth rate (R):", 1.1,
+              min = 1, max = 2, step=.01),
+sliderInput("a", "Search efficiency (a):", 0.1,
+              min = 0, max = .5),
+sliderInput("k", "aggregation (k):", 1.5,
+              min = 0.1, max = 3, step=0.1),
+numericInput("P0", "Initial parasitoid:", 10,
+              min = 1, max = 100),
+numericInput("H0", "Initial host:", 20,
+              min = 1, max = 100),
+numericInput("Tmax", "Tmax:", 100,
+              min = 1, max = 500)
+),
+mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotOutput("plot1", height = 500)),
+  tabPanel("Phase plane", plotOutput("plot2", height = 500)),
+     tabPanel("Details", 
+    withMathJax(
+         helpText("MODEL:"),
+             helpText("Host $$H_t = R H_{t-1} (1 + a P_{t-1})^k$$"),
+          helpText("Parasitoid $$P_t = R H_{t-1} (1-(1 + a P_{t-1})^k)$$"),
+          helpText("REFERENCE: May RM (1978) Host-parasitoid systems in patchy 
+            environments: a phenomenological model. J Anim Ecol 47: 833-843")
+)
+)
+)
+)
+)
+server = function(input, output) {
+ NB = function(R, a, k, T = 100, H0 = 10, P0 = 1){
+   #T is length of simulation (number of time-steps)
+   #H0 and P0 are initial numbers
+   #we provide default parameters except for R and a
+
+   H=rep(NA, T) #host series
+   P=rep(NA, T) #parasitoid series
+
+   H[1] = H0 #Initiating the host series
+   P[1] = P0 #Initiating the host series
+
+   for(t in 2:T){
+     H[t] = R * H[t-1] * (1+ a * P[t-1]/k)^(-k)
+     P[t] = R * H[t-1] * (1-(1+ a * P[t-1]/k)^(-k))
+     if(P[t-1]==0) break
+   } #end of loop
+
+   #the two vectors of results are stored in a "list"
+   res= data.frame(H = H, P = P)
+ 
+   #the list is passed out of this function
+   return(res)
+} #end of function
+
+
+
+  output$plot1 <- renderPlot({
+
+    sim= NB(R=input$R, a=input$a, k=input$k, H0=input$H0, P0=input$P0, T=input$Tmax)
+    time = 1:input$Tmax
+
+    plot(time, sim$H, type= "b",xlab = "Generations", ylab = "Abundance", 
+      ylim = range(sim, na.rm=TRUE))
+    points(time, sim$P, type = "b", col = "red")
+     legend("topleft",
+        legend=c("H", "P"),
+        lty=c(1,1),
+        pch=c(1,1),
+        col=c("black", "red"))
+   })
+
+output$plot2 <- renderPlot({
+
+    sim= NB(R=input$R, a=input$a, k=input$k, H0=input$H0, P0=input$P0, T=input$Tmax)
+    time = 1:input$Tmax
+   
+    plot(sim$H, sim$P, type= "b",xlab = "Host", ylab = "Parasitoid")
+    #Pstar=input$k*(input$R^(1/input$k)-1)/input$a
+    #Hstar=Pstar*input$R/(input$R-1)
+    #points(Hstar, Pstar, col=2, pch=19)
+   })
+
+}  
+shinyApp(ui, server)
+```
+
+References:
+
+May RM (1978) Host-parasitoid systems in patchy environments: a phenomenological model. J Anim Ecol 47: 833-843
+
+Nicholson AJ, Bailey VA (1935) The balance of animal populations. Proceedings of the Zoological Society of London 3: 551-598.

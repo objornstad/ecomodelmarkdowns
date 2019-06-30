@@ -1,0 +1,160 @@
+---
+title: "Lotka-Volterra competion model"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019 
+https://github.com/objornstad/
+
+This Rmarkdown of the Lotka-Volterra competition model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny, deSolve and phaseR packages to be installed to run. 
+
+```{r}
+require(shiny)
+require(deSolve)
+require(phaseR)
+```
+
+The basic equations for the competitive interaction between species 1 ($N_1$)  and species 2 ($N_2$) are:
+\begin{align}
+    \frac{dN_1}{dt} =& r_1 N_1 (\frac{K_1-N_1-\alpha_{12}N_2}{K_1})\\
+    \frac{dN_2}{dt} =& r_1 N_2 (\frac{K_2-N_2-\alpha_{21}N_1}{K_2})\\
+\end{align}
+
+Bothe species are assumed to grow according to the logistic model with maximum growth rates $r_1$ and $r_2$, and carrying capacities, $K_1$ and $K_2$. Interspecific competiotion coefficents are $\alpha_{12}$ and $\alpha_{21}$.
+
+The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
+equations $dN_1/dt=0$ and $dN_2/dt=0$ and partitions the phase plane into regions 
+were $N_1$ and $N_2$ are increasing and decreasing. The $N_1$ isocline is
+$$N_2 = \frac{K_1 - N_1}{\alpha_{12}}$$
+The $N_2$ isocline is
+$$N_2 = K_2 - \alpha_{21} N_1$$
+Depending on parameters the equilibria are $$\{N_1^*=K_1,N_2^*=0\}$$, $$\{N_1^*=0, N_2^*=K_2\}$$ or 
+$$\{N_1^* = \frac{K_1-\alpha_{12} K_2}{1-\alpha_{12} \alpha_{21}},
+           N_2^* = \frac{K_2-\alpha_{21} K_1}{1-\alpha_{12} \alpha_{21}}\}$$
+ 
+
+
+The  shiny app:
+
+```{r, echo=FALSE}
+ui = fluidPage(
+# This creates the User Interface (UI)
+  tags$head(tags$style(
+    HTML('
+         #sidebar1 {
+            background-color: #D3D3D3;
+        }
+    
+    #sidebar2 {
+      background-color: #ECECEC
+    }')
+  )),
+titlePanel("Lotka-Volterra competition model"),
+fluidRow(
+column(4, id = "sidebar2",
+fluidRow(column(5, id = "sidebar1",
+sliderInput("r1", "r1:", 0.3,
+               min = 0, max = 1, step=0.01),
+sliderInput("a", "alpha12:", 0.3,
+               min = 0, max = 1, step=0.01),
+sliderInput("K1", "K1:", 150,
+               min = 0, max = 300, step=1),
+numericInput("N1", "initial N1:", 10,
+               min = 0, max = 1000)),
+column(5, offset = 1, id = "sidebar1",
+sliderInput("r2", "r2:", 0.5,
+               min = 0, max = 1, step=0.01),
+sliderInput("b", "alpha21:", 0.7,
+               min = 0, max = 1, step=0.01),
+sliderInput("K2", "K2:", 100,
+               min = 0, max = 300, step=1),
+numericInput("N2", "initial N2:", 15,
+               min = 0, max = 1000)),
+column(1)),
+fluidRow(
+column(6, offset = 3, id = "sidebar1",
+numericInput("Tmax", "Tmax:", 100,
+               min = 0, max = 200)),
+column(3))
+),
+column(8,  tabsetPanel(
+      tabPanel("Simulation", plotOutput("plot1")), 
+      tabPanel("Details", 
+           withMathJax(
+            helpText("MODEL:"),
+            helpText("Species 1 $$\\frac{dN_1}{dt} = r_1 N_1 (\\frac{K_1-N_1-\\alpha_{12} N_2}{K_1})$$"),
+            helpText("Species 2 $$\\frac{dN_2}{dt} = r_2 N_2 (\\frac{K_2-N_2-\\alpha_{21} N_1}{K_2})$$"),
+          helpText("N_1-isocline $$N_2 = \\frac{K_1 - N_1}{\\alpha_{12}}$$"),
+          helpText("N_2-isocline $$N_2 = K_2 - \\alpha_{21} N_1$$")
+          )
+           )
+  )
+))
+)
+
+
+# This creates the "behind the scenes" code (Server)
+server = function(input, output) {
+compLV=function(t, y, parameters){
+   N1=y[1]
+   N2=y[2]
+
+   with(as.list(parameters),{
+   dN1 = r1*N1*((K1-N1-a*N2)/K1)
+   dN2 = r2*N2*((K2-N2-b*N1)/K2)
+   res=c(dN1, dN2)
+   list(res)
+})
+}
+
+output$plot1 <- renderPlot({
+N1star=(input$K1-input$a*input$K2)/(1-input$a*input$b)
+N2star=(input$K2-input$b*input$K1)/(1-input$a*input$b)
+
+
+times  = seq(0, input$Tmax, by=0.1)
+parms=c(r1=input$r1, r2=input$r2,a=input$a,b=input$b,
+K1=input$K1,K2=input$K2)
+xstart = c(N1=input$N1, N2=input$N2)
+
+out=ode(y=xstart,
+   times=times,
+   func=compLV,
+   parms=parms)
+
+   out=as.data.frame(out)
+
+
+par(mfrow=c(1,2))  #This puts two plots side by side each other
+plot(times, out$N1, ylab="abundance", xlab="time", type="l",
+ylim=range(out[,2:3]))
+lines(times, out$N2, col="red")
+   legend("topright",
+         legend=c("N1", "N2"),
+         lty=c(1,1),
+          col=c("black", "red"))
+
+plot(NA,xlim=c(0,input$K1*2),ylim=c(0,input$K2*2), xlab="N1", ylab="N2")
+fld=flowField(compLV, xlim=c(0,input$K1*2), ylim=c(0,input$K2*2), 
+parameters=parms, system="two.dim", add=TRUE)
+
+#null clines
+curve((input$K1-x)/input$a,col="black",add=TRUE)
+curve(input$K2-input$b*x,col="red",add=TRUE)
+abline(v=0,col="black")
+abline(h=0,col="red")
+points(0,0,pch=19)
+points(input$K1,0,pch=19)
+points(0,input$K2,pch=19)
+if(!any(c(N1star, N2star)<0)) points(N1star,N2star,pch=19)
+lines(out[,2], out[,3], lwd=2)
+    })
+   }
+
+shinyApp(ui, server)
+```
+

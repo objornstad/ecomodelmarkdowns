@@ -1,0 +1,162 @@
+---
+title: "LPA tribolium model"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019 
+https://github.com/objornstad/
+
+This Rmarkdown of the LPA tribolium was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+
+The app requires the shiny and sctterplot3d packages to be installed to run. 
+```{r}
+require(shiny)
+require(scatterplot3d)
+```
+
+The LPA model (Costantino et al 1997) studies the stage-structured cannibalistic interactions among eggs, larvae (L), pupae (P) and adult (A) Tribolium flour beetles. The model uses a difference equation framework with a 2-week time step. basic equations are:
+\begin{align}
+L_{t+1} & = \underbrace{b A_t}_{\mbox{eggs}} \underbrace{e^{-c_{ea} A_t} e^{-c_{el}L_t}}_{\mbox{not cannibalized}}\\
+P_{t+1} & =   L_t  \underbrace{(1-m_l) }_{\mbox{not died}}\\
+A_{t+1} & =   P_t  \underbrace{e^{-c_{pa} A_t}}_{\mbox{not cannibalized}} + \underbrace{(1-m_a) A_t}_{\mbox{not died}}
+\end{align}
+
+Adults are assumed to lay $b$ eggs of which a fraction $1-e^{-c_{ea} A_t}$ is cannibalized by adults and $1-e^{-c_{el}L_t}$ by larvae; $c_{ea}$ and $c_{el}$ are cannibalism coefficients. Larvae suffers density independent mortality with probability $m_l$ per biweek. The egg and the larval stages are assumed to be two weeks. A fraction $1-e^{-c_{pa} A_t}$ of the pupae are cannibalized by adults. Adults suffer density independent mortality $m_a$ per biweek.
+
+Costantino et al. (1997) used replacement experiments to increase adult mortality from the control of $m_l = 0.0076$ to $m_l = 0.96$ and manipulated pupal cannibalism rates to $c_{pa}$ = 0 (stable), 0.05 (8-cycle), 0.010 (invariant loop), 0.25 (chaotic), 0.35 (chaotic), 0.5 (3-cycle or chaotic), 1 (3-cycle)$.
+
+Unchecking the LINES BOX in the app allows for better visualization of complex attractors in the 2D and 3D phase planes.
+
+The  shiny app:
+
+```{r, echo=FALSE}
+ui = pageWithSidebar(
+  tags$head(tags$style(
+    HTML('
+         #sidebar1 {
+            background-color: #ECECEC;
+        }
+    
+    #sidebar2 {
+      background-color: #ECECEC
+    }')
+  )),
+titlePanel(""),
+fluidRow(
+column(4, id = "sidebar2",
+fluidRow(column(5, id = "sidebar1",
+sliderInput("b", "b:", 6.598,
+              min = 0, max = 10, step=0.1),
+sliderInput("cel", "cel:", 1.209e-2,
+              min = 0, max = 1, step=0.01),
+sliderInput("cea", "cea:", 1.155e-2,
+              min = 0, max = 1, step=0.01)
+),
+column(5, offset = 1, id = "sidebar1",
+sliderInput("cpa", "cpa:", 1,
+              min = 0, max = 1, step=0.01),
+sliderInput("mua", "ma:", 0.96,
+              min = 0, max = 1, step=0.01),
+sliderInput("mul", "ml:", 0.2055,
+              min = 0, max = 1, step=0.01)
+#numericInput("L0", "initial L:", 50,
+#              min = 0, max = 100),
+#numericInput("P0", "initial P:", 0,
+#              min = 0, max = 100),
+#numericInput("A0", "initial A:", 0,
+#              min = 0, max = 100)
+),
+column(1)),
+fluidRow(
+column(6, offset = 3, id = "sidebar1",
+sliderInput("T", "Time range:",
+                  min = 1, max = 500, value = c(100,150)),
+checkboxInput("li", "lines", TRUE)),
+column(3))
+),
+column(8, 
+mainPanel(
+  tabsetPanel(
+      tabPanel("Time", plotOutput("plot1")), 
+      tabPanel("2D Phase plane", plotOutput("plot2")),   
+      tabPanel("3D Phase plane", plotOutput("plot3"))
+      )
+)))
+)
+
+# This creates the 'behind the scenes' code (Server)
+server <- function(input, output) {
+
+lpa = function(b=6.598, cel=1.209e-2, cea=1.155e-2, mul=0.2055, 
+      cpa=4.7e-3, mua=7.629e-3, init=c(50,0,0), T=500){
+#Initiate empty matrix to hold simulation
+res = matrix(NA, nrow=500, ncol=3)
+
+#Add column names
+dimnames(res) = list(NULL, c("L", "P", "A"))
+
+#store initial conditions in first row
+res[1,] = init
+
+for(i in 2:T){
+     #Larval equation
+     res[i,1] = b*res[i-1,3]*exp(-cel*res[i-1,1]-cea*res[i-1,3])
+     #Pupal equation
+     res[i,2] = res[i-1,1]*(1-mul)
+     #Adult equation
+     res[i,3] = res[i-1,2]*exp(-cpa*res[i-1,3])+res[i-1,3]*(1-mua)
+     }
+return(res)
+}
+
+output$plot1 <- renderPlot({
+out=lpa(b=input$b, cel=input$cel, cea=input$cea, mul=input$mul,
+  cpa=input$cpa, mua=input$mua)
+ 
+ 
+plot(input$T[1]:input$T[2], out[input$T[1]:input$T[2],3], type = "b", xlab = "Week", 
+  ylab = "Abundance", xlim=input$T, ylim=c(0, max(out[input$T[1]:input$T[2],c(1,3)])))
+lines(input$T[1]:input$T[2], out[input$T[1]:input$T[2],1], col=2)
+ legend("topleft",
+        legend=c("A", "L"),
+        lty=c(1,1),
+        pch=c(1,NA),
+         col=c("black", "red"))
+
+   })
+
+output$plot2 <- renderPlot({
+out=lpa(b=input$b, cel=input$cel, cea=input$cea, mul=input$mul,
+  cpa=input$cpa, mua=input$mua)
+ 
+ 
+plot(out[input$T[1]:input$T[2],1], out[input$T[1]:input$T[2],3], type = ifelse(input$li==TRUE, "b", "p"), xlab = "L", 
+  ylab = "A", xlim=c(0, max(out[input$T[1]:input$T[2],1])), 
+  ylim=c(0, max(out[input$T[1]:input$T[2],3])))
+
+   })
+
+output$plot3 <- renderPlot({
+out=lpa(b=input$b, cel=input$cel, cea=input$cea, mul=input$mul,
+  cpa=input$cpa, mua=input$mua)
+ 
+scatterplot3d(x=out[input$T[1]:input$T[2],1], y=out[input$T[1]:input$T[2],2], 
+  z=out[input$T[1]:input$T[2],3], type = ifelse(input$li==TRUE, "b", "p"), xlim=c(0, max(out[input$T[1]:input$T[2],1])),
+   ylim=c(0, max(out[input$T[1]:input$T[2],2])),
+    zlim=c(0, max(out[input$T[1]:input$T[2],3])),
+    xlab="L", ylab="P", zlab="A")
+
+   })
+
+
+  }
+
+shinyApp(ui, server)
+```
+
+Reference:
+
+Costantino RF, Desharnais RA, Cushing JM, Dennis B (1997) Chaotic dynamics 
+            in an insect population. Science 275: 389-391

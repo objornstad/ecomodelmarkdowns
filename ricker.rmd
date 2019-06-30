@@ -1,0 +1,91 @@
+---
+title: "Ricker model with ShinyApp"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019
+https://github.com/objornstad
+
+This Rmarkdown of the Ricker ('discrete logistic') model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny package to be installed to run. The argument Tmax specifies how many generations to run the model.
+
+```{r}
+require(shiny)
+```
+
+The basic equation is:
+\begin{align}
+  X_{t+1} = X_t e^{(r (1 - X_t/K))}
+\end{align}
+
+
+The  shiny app:
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui = pageWithSidebar(
+headerPanel(""),
+sidebarPanel(
+sliderInput("r", "Growth rate (r):", 2.2,
+              min = 0, max = 4, step=.1),
+sliderInput("K", "Carrying capacity (K):", 100,
+              min = 25, max = 200),
+numericInput("X0", "Initial number:", 70,
+              min = 1, max = 200),
+numericInput("Tmax", "Tmax:",100,
+              min = 1, max = 500)
+),
+
+mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotOutput("plot1", height = 500)),
+  tabPanel("Details",
+    withMathJax(
+                helpText("MODEL:"),
+            helpText("$$X_{t+1} = X_t \\exp(r (1- X_t/K))$$"),
+            helpText("REFERENCE: Ricker WE (1954) Stock and recruitment. 
+              Journal of Fishery Research Board Canada 11: 559-623"))
+)
+)
+)
+) #End of ui()
+
+# This creates the 'behind the scenes' code (Server)
+server = function(input, output) {
+ logist = function(r, K, length = 200, X0=70){
+  X =  rep(NA, length) #set up the empty vector of the right length
+  X[1] = X0 #setting the abundance at time 1 to N0
+
+  for(i in 2:length){ #iteratively updating the growth model.
+                    #next abundance is determined by previous abundance
+    X[i] = X[i-1]*exp(r*(1-X[i-1]/K))
+    }
+  return(X) #returning the simulated vector
+  }
+
+
+
+  output$plot1 <- renderPlot({
+
+    X= logist(r=input$r, K=input$K, length=input$Tmax, X0=input$X0)
+    time = 1:input$Tmax
+    par(mfrow=c(1,2))
+     plot(X, xlab = "time", ylab = "abundance", type="b") # making a time series plot
+    curve(x*exp(input$r*(1-x/input$K)),0,input$K*3, xlab = "Xt-1", ylab = "Xt")
+abline(a=0, b=1) # adding the 1-to-1 line
+points(X[1:(input$Tmax-1)],X[2:input$Tmax], col = "red") # adding the points
+# from the simulation to the graph
+lines(X[1:(input$Tmax-1)], X[2:input$Tmax], col = "red") # adding the line to connect the points
+   })
+  } #End of server()
+
+shinyApp(ui, server)
+```
+
+Reference:
+
+Ricker WE (1954) Stock and recruitment. 
+              Journal of Fishery Research Board Canada 11: 559-623
+

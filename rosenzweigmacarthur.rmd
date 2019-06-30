@@ -1,0 +1,197 @@
+---
+title: "Rosenzweig-MacArthur predator-prey model"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019 
+https://github.com/objornstad
+
+This Rmarkdown of the Rosenzweig-MacArthur predator-prey model was written by Ottar N. Bjornstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny, deSolve and phaseR packages to be installed to run. 
+
+```{r}
+require(shiny)
+require(deSolve)
+require(phaseR)
+```
+
+The basic equations for the consumer-resource interaction between prey (N)  and predators (P) are:
+\begin{align}
+    \frac{dN}{dt} =& \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + P}}_{\mbox{predation}}\\
+     \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + P}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
+\end{align}
+
+Prey are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. Predators are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expectancy of $1/g$.
+
+The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
+equations $\frac{dN}{dt} = 0$ and $\frac{dP}{dt} = 0$ and partitions the phase plane into regions 
+were $N$ and $P$ are increasing and decreasing. The $N$-isocline is $P^* = (r-rN/K)(c+N)/a$
+and the P-isocline is $N^* = gc/(b-g)$. The equilibrium is
+\begin{align}
+N^* =& gc/(b-g) \\
+P^* =& (r-rN^*/K)(c+N^*)/a
+\end{align}
+The  shiny app is:
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui = fluidPage(
+  tags$head(tags$style(
+    HTML('
+         #sidebar1 {
+            background-color: #D3D3D3;
+        }
+    
+    #sidebar2 {
+      background-color: #ECECEC
+    }')
+  )),
+fluidRow(
+column(4, id = "sidebar2",
+fluidRow(column(5, id = "sidebar1",
+sliderInput("r", "r:", 0.1,
+               min = 0, max = 1, step=0.01),
+sliderInput("K", "K:", 90,
+               min = 0, max = 300, step=1),
+sliderInput("a", "a:", 0.2,
+               min = 0, max = 1, step=0.01),
+numericInput("N", "initial N:", 10,
+               min = 0, max = 100)),
+column(5, offset = 1, id = "sidebar1",
+sliderInput("c", "c:", 20,
+               min = 0, max = 100, step=0.1),
+sliderInput("b", "b:", 0.1,
+               min = 0, max = 1, step=0.01),
+sliderInput("g", "g:", 0.05,
+               min = 0, max = 1, step=0.01),
+numericInput("P", "initial P:", 1,
+               min = 0, max = 100)),
+column(1)),
+fluidRow(
+column(6, offset = 3, id = "sidebar1",
+numericInput("Tmax", "Tmax:", 1000,
+               min = 0, max = 5000)),
+column(3))
+),
+#column(8, plotOutput("plot1", height = 500))
+column(8,  tabsetPanel(
+      tabPanel("Time", plotOutput("plot1")), 
+      tabPanel("Phase plane", plotOutput("plot2")),
+      tabPanel("Details", 
+           withMathJax(
+       helpText("MODEL:"),
+            helpText("Prey $$\\frac{dN}{dt} = r N (1-\\frac{N}{K}) - \\frac{a N P}{c+N}$$"),
+          helpText("Predator $$\\frac{dP}{dt} = \\frac{b N P}{c+N} - g P$$"),
+          helpText("N-isocline $$P^* = (r-rN/K)(c+N)/a$$"),
+          helpText("P-isocline $$N^* = gc/(b-g)$$"),
+          helpText("Equilibria $$N^* = gc/(b-g), P^* = (r-rN^*/K)(c+N^*)/a$$"),
+         helpText("REFERENCE: Rosenzweig ML, MacArthur RH (1963) Graphical representation 
+              and stability conditions of predator-prey interactions. Am Nat 97: 209-223")
+          ))
+
+   
+  )
+)
+)
+)
+
+# This creates the "behind the scenes" code (Server)
+server = function(input, output){
+RM=function(t, y, parameters){
+  N=y[1]
+  P=y[2]
+
+  r=parameters["r"]
+  K=parameters["K"]
+  a=parameters["a"]
+  c=parameters["c"]
+  b=parameters["b"]
+  g=parameters["g"]
+
+    dN = r*N*(1-N/K)-a*N*P/(c+N)
+    dP = b*N*P/(c+N)-g*P
+    res=c(dN,dP)
+    list(res)
+}
+
+output$plot1 <- renderPlot({
+
+ times  = seq(0, input$Tmax, by=0.1)
+ parms=c(r=input$r, K=input$K,a=input$a,
+   c=input$c,b=input$b,g=input$g)
+ xstart = c(N=input$N, P=input$P)
+
+ out=ode(y=xstart,
+    times=times,
+    func=RM,
+    parms=parms)
+
+    out=as.data.frame(out)
+
+  r=parms["r"]
+  K=parms["K"]
+  a=parms["a"]
+  c=parms["c"]
+  b=parms["b"]
+  g=parms["g"]
+
+
+ plot(out$time, out$N, ylab="abundance", xlab="time", type="l", ylim=range(out[,2:3]))
+ lines(out$time, out$P, col="red")
+    legend("topright",
+          legend=c("N", "P"),
+          lty=c(1,1),
+           col=c("black", "red"))
+})
+
+output$plot2 <- renderPlot({
+
+ times  = seq(0, input$Tmax, by=0.1)
+ parms=c(r=input$r, K=input$K,a=input$a,
+   c=input$c,b=input$b,g=input$g)
+ xstart = c(N=input$N, P=input$P)
+
+ out=ode(y=xstart,
+    times=times,
+    func=RM,
+    parms=parms)
+
+    out=as.data.frame(out)
+
+  r=parms["r"]
+  K=parms["K"]
+  a=parms["a"]
+  c=parms["c"]
+  b=parms["b"]
+  g=parms["g"]
+
+#null clines
+plot(out$N, out$P, ylab='predator', xlab='prey', type='l', 
+xlim=range(out$N), ylim= range(out$P))
+abline(h=0, col = "green")
+abline(v=0, col = "red")
+curve(r*(1-x/K)*(c+x)/a,from = 0, to = max(c(90, out$N)), col = "green",add=T)
+abline(v=g*c/(b-g),col = "red")
+fld=flowField(RM, xlim=range(out$N), ylim=range(out$P), 
+parameters=parms, system="two.dim", add=TRUE)
+   legend("topright",
+          legend=c("N-iso", "P-iso"),
+          lty=c(1,1),
+           col=c("green", "red"))
+
+# points(Nstar,Pstar,pch = 1)
+
+})
+
+
+}
+
+shinyApp(ui, server)
+```
+
+Reference:\\
+Rosenzweig ML, MacArthur RH (1963) Graphical representation 
+              and stability conditions of predator-prey interactions. Am Nat 97: 209-223

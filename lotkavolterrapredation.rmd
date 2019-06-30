@@ -1,0 +1,138 @@
+---
+title: "Lotka-Volterra predation model"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019 
+https://github.com/objornstad/
+
+This Rmarkdown of the Lotka-Volterra predation model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+
+The app requires the shiny, deSolve and phaseR packages to be installed to run. 
+```{r}
+require(shiny)
+require(deSolve)
+require(phaseR)
+```
+
+The basic equations for the consumer-resource interaction between prey (N)  and predators (P) are:
+\begin{align}
+    \frac{dN}{dt} =& \underbrace{r N)}_{\mbox{N growth}} - \underbrace{a N P}_{\mbox{predation}}\\
+     \frac{dP}{dt} =& \underbrace{b a N P}_{\mbox{P growth}} - \underbrace{m P}_{\mbox{P death}}
+\end{align}
+
+Prey are assumed to grow exponentially at a rate, $r$. Predators are feeding at a per-capita rate $a$. Predators have a conversion efficiency of $b$ and a life-expectancy of $1/m$.
+
+The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
+equations $dN/dt=0$ and $dP/dt=0$ and partitions the phase plane into regions 
+were $N$ and $P$ are increasing and decreasing. 
+The $N$-isocline is $$P^* = r/a$$
+and the $P$-isocline is $$N^* = g/b$$ 
+
+The  shiny app:
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui = fluidPage(
+  tags$head(tags$style(
+    HTML("
+         #sidebar1 {
+            background-color: #ECECEC;
+        }
+    
+    #sidebar2 {
+      background-color: #ECECEC
+    }")
+  )),
+titlePanel("Lotka-Volterra predation model"),
+fluidRow(
+column(4, id = "sidebar2",
+fluidRow(column(5, id = "sidebar1",
+sliderInput("r", "r:", 0.6,
+              min = 0, max = 1, step=0.01),
+sliderInput("a", "a:", 0.1,
+              min = 0, max = 1, step=0.01),
+numericInput("N0", "initial N:", 10,
+              min = 0, max = 100)),
+column(5, offset = 1, id = "sidebar1",
+sliderInput("b", "b:", 0.1,
+              min = 0, max = 1, step=0.01),
+sliderInput("m", "m:", 0.2,
+               min = 0, max = 1, step=0.01),
+numericInput("P0", "initial P:", 10,
+              min = 0, max = 100)),
+column(1)),
+fluidRow(
+column(6, offset = 3, id = "sidebar1",
+numericInput("Tmax", "Tmax:", 100,
+               min = 0, max = 200)),
+column(3))
+),
+mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotOutput("plot1", height = 500)),
+     tabPanel("Details", 
+     withMathJax(
+                helpText("MODEL:"),
+          helpText("Prey $$\\frac{dN}{dt} = r N - a N P$$"),
+          helpText("Predator $$\\frac{dP}{dt} = b a N P - m P$$"),
+          helpText("N-isocline $$P^* = r/a$$"),
+          helpText("P-isocline $$N^* = g/b$$"),
+          helpText("Equilibrium $$N^* = g/b, P^* = r/a$$")))
+           )
+)
+)
+)
+
+# This creates the "behind the scenes" code (Server)
+server = function(input, output) {
+LV=function(t, y, parameters){
+  N=y[1]
+  P=y[2]
+
+  with(as.list(parameters),{
+  dN = r*N-a*N*P
+  dP =b*a*N*P-m*P
+  res=c(dN, dP)
+  list(res)
+})
+}
+
+output$plot1 <- renderPlot({
+Nstar=input$m/(input$b*input$a)
+Pstar=input$r/input$a
+
+times  = seq(0, input$Tmax, by=0.1)
+parms=c(r=input$r,a=input$a,b=input$b,m=input$m)
+xstart = c(N=input$N0, P=input$P0)
+ 
+out=ode(y=xstart,
+  times=times,
+  func=LV,
+  parms=parms)
+
+  out=as.data.frame(out)
+
+ 
+par(mfrow=c(1,2))  #This puts two plots side by side each other
+plot(times, out$N, ylab="abundance", xlab="time", type="l", ylim=range(out[,1:2]))
+lines(times, out$P, col="red")
+  legend("right",
+        legend=c("N", "P"),
+        lty=c(1,1),
+         col=c("black", "red"))
+
+plot(out$N, out$P, ylab="predator", xlab="prey", type="l", xlim=range(out[,2]), ylim=range(out[,3]))
+abline(h=Pstar, col = "black")
+abline(v=Nstar, col = "red")
+fld=flowField(LV, xlim=range(out[,2]), ylim=range(out[,3]), 
+parameters=parms, system="two.dim", add=TRUE)
+points(0,0,pch = 1)
+points(Nstar,Pstar, pch = 19)
+   })
+  }
+
+shinyApp(ui, server)
+```
+

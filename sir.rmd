@@ -1,0 +1,196 @@
+---
+title: "SIR model with ShinyApp"
+author: Ottar N. Bjornstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5 June 28, 2019
+https://github.com/objornstad
+
+This Rmarkdown of the SIR model was written by Ottar N. Bjornstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny, deSolve and phaseR packages to be installed to run.
+
+```{r}
+require(shiny)
+require(deSolve)
+require(phaseR)
+```
+
+The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
+ compartments are:
+\begin{align}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
+     \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}  \label{eq:siri}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
+\end{align}
+The assumptions of this version of the SIR model are:
+
+ 
+- The infection circulates 
+     in a population of size $N$, with a per capita ``background"
+     death rate, $\mu$, which is balanced by a
+     birth rate $\mu N$. From the sum of the equations $dN/dt=0$ and $N=S+I+R$ is constant.
+
+- The infection causes morbidity (not mortality).
+
+- Newborns are recruited directly into the susceptible
+     class at birth.
+
+- Transmission of infection from infectious to
+     susceptible individuals is controlled by a bilinear contact
+     term $\beta I \frac{S}{N}$, from the assumption that the $I$ infectious individuals are independently and randomly
+     mixing with all other individuals, so the fraction $S/N$ is with susceptible individuals; $\beta$ is the transmission rate.
+
+- Infected individuals move directly into the 
+     the infectious class and remains there 
+     for an average infectious period of $1/(\gamma+\mu)$ time units.
+
+- Recovered individuals are immune
+     from re-infection for life.
+
+For the basic SIR model $R_0 = \frac{\beta}{\gamma + \mu}$. The isoclines (sometimes called the null-clines)  are given by the solution to the 
+equations $dS/dt=0$ and $dI/dt=0$ and partitions the phase plane into regions 
+were $S$ and $I$ are increasing and decreasing. 
+For $N=1$, the $I$-isocline is $S = (\gamma +\mu)/\beta = 1/R_0$
+and the S-isocline is $I= \mu (1/S-1)/\beta$.
+
+The resonant period is $\frac{2 \pi}{\mu (R_0 -1) (\mu + \gamma)}$ 
+
+The  shiny app:
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui <- pageWithSidebar(
+headerPanel(""),
+#The sidebar for parameter input
+sidebarPanel(
+#Sliders:
+sliderInput("beta", "Transmission (yr^-1):", 300,
+              min = 0, max = 1000),
+sliderInput("infper", "Infectious period (days)", 5,
+              min = 1, max = 100),
+sliderInput("mu", "birth rate:", 5,
+              min = 0, max = 100),
+sliderInput("T", "Time range:",
+                  min = 0, max = 1, value = c(0,1))
+),
+#Main panel for figures and equations
+mainPanel(
+  #Multiple tabs in main panel
+  tabsetPanel(
+      #Tab 1: Time plot (plot1 from server)
+      tabPanel("Time", plotOutput("plot1")), 
+      #Tab 2: Phase plot (plot2 from server)
+      tabPanel("Phase plane", plotOutput("plot2", height = 500)),
+      #Tab 3: MathJax typeset equations 
+      tabPanel("Equations", 
+           withMathJax(
+            helpText("Susceptible $$\\frac{dS}{dt} = \\mu (N - S) - \\frac{\\beta I S}{N}$$"),
+            helpText("Infecitous $$\\frac{dI}{dt} = \\frac{\\beta I S}{N} - (\\mu+\\sigma) I$$"),
+           helpText("Removed $$\\frac{dR}{dt} = \\gamma I - \\mu R$$"),
+           helpText("Reproductive ratio $$R_0 =  \\frac{1}{\\gamma+\\mu} \\frac{\\beta N}{N}$$")             
+           ))
+  ))) #End of ui()
+
+
+# This creates the 'behind the scenes' code (Server)
+server <- function(input, output) {
+  #Gradient function for SIR model
+  sirmod=function(t, x, parms){
+    S=x[1]
+    I=x[2]
+    R=x[3]
+    beta=parms["beta"]
+    mu=parms["mu"]
+    gamma=parms["gamma"]
+    N=parms["N"]
+    dS = mu * (N  - S)  - beta * S * I / N
+    dI = beta * S * I / N - (mu + gamma) * I
+    dR = gamma * I - mu * R
+    res=c(dS, dI, dR)
+    list(res)
+  }
+
+ #Plot1: renderPlot to be passed to UI tab 1
+  output$plot1 <- renderPlot({
+  #input\$xx's are pulled from UI
+  times  = seq(0, input$T[2], by=1/1000)
+  parms  = c(mu = input$mu, N = 1, beta =  input$beta, gamma =
+    365/input$infper)
+  start = c(S=0.999, I=0.001, R = 0)
+  R0 = round(with(as.list(parms), beta/(gamma+mu)), 1)
+  #Resonant period
+  AA=with(as.list(parms), 1/(mu*(R0-1)))
+  GG=with(as.list(parms), 1/(mu+gamma))
+  rp=round(2*pi*sqrt(AA*GG),2)
+
+  #Integrate ode with parameters pulled from UI
+  out=ode(y=start,  times=times, func=sirmod, parms=parms)
+  out=as.data.frame(out)
+
+  #Plot1
+  sel=out$time>input$T[1]&out$time<input$T[2]
+  plot(x=out$time[sel], y=out$S[sel], ylab="fraction", xlab="time", type="l",
+  ylim=range(out[sel,-c(1,4)]))
+  title(paste("R0=", R0, "Period=", rp, "/ year"))
+  lines(x=out$time[sel], y=out$I[sel], col="red")
+  lines(x=out$time[sel], y=out$R[sel], col="green")
+  legend("right",
+        legend=c("S", "I", "R"),
+        lty=c(1,1,1),
+         col=c("black", "red", "green"))
+   })
+
+ #Plot2: renderPlot to be passed to UI tab 2
+  output$plot2 <- renderPlot({
+  times  = seq(0, input$T[2], by=1/1000)
+  parms  = c(mu = input$mu, N = 1, beta =  input$beta, gamma =
+    365/input$infper)
+  start = c(S=0.999, I=0.001, R = 0)
+  R0 = round(with(as.list(parms), beta/(gamma+mu)), 1)
+
+  #Gradient function used for phaseR phase-plot
+  simod=function(t, y, parameters){
+   S=y[1]
+   I=y[2]
+   beta=parameters["beta"]
+   mu=parameters["mu"]
+   gamma=parameters["gamma"]
+   N=parameters["N"]   
+   dS = mu * (N  - S)  - beta * S * I / N
+   dI = beta * S * I / N - (mu + gamma) * I
+   res=c(dS, dI)
+   list(res)
+  }
+
+  #Integrate simod
+  out=ode(y=start[-3], times=times, func=simod, parms=parms)
+  out=as.data.frame(out)
+
+  AA=with(as.list(parms), 1/(mu*(R0-1)))
+  GG=with(as.list(parms), 1/(mu+gamma))
+  rp=round(2*pi*sqrt(AA*GG),2)
+  
+  plot(x=out$S, y=out$I, xlab="Fraction suceptible", ylab="Fraction infected", type="l")
+  title(paste("R0=", R0, "Period=", rp, "/year"))
+  #Add vector field
+  fld=flowField(simod, xlim=range(out$S), ylim=range(out$I), 
+  parameters=parms, system="two.dim", add=TRUE,
+  ylab="I", xlab="S")
+  #Add isoclines
+  abline(v=1/R0, col="green")
+  curve(parms["mu"]*(1-x)/(parms["beta"]*x), min(out$S), max(out$S), add=TRUE, col="red")
+    legend("topright",
+        legend=c("I-socline", "S-isocline"),
+        lty=c(1,1),
+         col=c("red", "green"))
+   })
+  } #End of server()
+
+shinyApp(ui, server)
+```
+
+
+
