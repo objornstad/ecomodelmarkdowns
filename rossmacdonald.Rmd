@@ -1,17 +1,17 @@
 ---
 title: "Ross-Macdonald model with embedded ShinyApp"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-This Rmarkdown of the Ross-Macdonald model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of a Ross-Macdonald model (Smith et al. 2012) was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
 
@@ -21,7 +21,7 @@ require(deSolve)
 require(phaseR)
 ```
 
-The basic equations are:
+The basic equations due to Aaron and May (1982) are:
 $$
 dx/dt = (a b Y / X) y (1-x) -\gamma x \\
 dy/dt = a c x (1-y)-  \mu y,
@@ -115,3 +115,7 @@ legend("topleft", c("H isocline", "M isocline", "Trajectory"), lty=c(1,1,0), col
 shinyApp(ui, server)
 ```
 
+References:
+Aron, J.L. and May, R.M. 1982. The population dynamics of malaria. In The population dynamics of infectious diseases: theory and applications (pp. 139-179). Springer, Boston, MA.
+
+Smith, D.L., Battle, K.E., Hay, S.I., Barker, C.M., Scott, T.W. and McKenzie, F.E. 2012. Ross, Macdonald, and a theory for the dynamics and control of mosquito-transmitted pathogens. PLoS pathogens, 8(4), p.e1002588.

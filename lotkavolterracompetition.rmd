@@ -1,14 +1,14 @@
 ---
 title: "Lotka-Volterra competion model"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad/
 
-This Rmarkdown of the Lotka-Volterra competition model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of the Lotka-Volterra competition model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
 
@@ -24,10 +24,10 @@ The basic equations for the competitive interaction between species 1 ($N_1$)  a
     \frac{dN_2}{dt} =& r_1 N_2 (\frac{K_2-N_2-\alpha_{21}N_1}{K_2})\\
 \end{align}
 
-Bothe species are assumed to grow according to the logistic model with maximum growth rates $r_1$ and $r_2$, and carrying capacities, $K_1$ and $K_2$. Interspecific competiotion coefficents are $\alpha_{12}$ and $\alpha_{21}$.
+Both species are assumed to grow according to the logistic model with maximum growth rates $r_1$ and $r_2$, and carrying capacities, $K_1$ and $K_2$. Interspecific competiotion coefficents are $\alpha_{12}$ and $\alpha_{21}$.
 
-The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
-equations $dN_1/dt=0$ and $dN_2/dt=0$ and partitions the phase plane into regions 
+The isoclines (sometimes called the nullclines) of this system -- given by the solution to the 
+equations $dN_1/dt=0$ and $dN_2/dt=0$ -- partitions the phase plane into regions 
 were $N_1$ and $N_2$ are increasing and decreasing. The $N_1$ isocline is
 $$N_2 = \frac{K_1 - N_1}{\alpha_{12}}$$
 The $N_2$ isocline is
@@ -35,8 +35,6 @@ $$N_2 = K_2 - \alpha_{21} N_1$$
 Depending on parameters the equilibria are $$\{N_1^*=K_1,N_2^*=0\}$$, $$\{N_1^*=0, N_2^*=K_2\}$$ or 
 $$\{N_1^* = \frac{K_1-\alpha_{12} K_2}{1-\alpha_{12} \alpha_{21}},
            N_2^* = \frac{K_2-\alpha_{21} K_1}{1-\alpha_{12} \alpha_{21}}\}$$
- 
-
 
 The  shiny app:
 
@@ -53,7 +51,7 @@ ui = fluidPage(
       background-color: #ECECEC
     }')
   )),
-titlePanel("Lotka-Volterra competition model"),
+titlePanel(""),
 fluidRow(
 column(4, id = "sidebar2",
 fluidRow(column(5, id = "sidebar1",
@@ -68,7 +66,7 @@ numericInput("N1", "initial N1:", 10,
 column(5, offset = 1, id = "sidebar1",
 sliderInput("r2", "r2:", 0.5,
                min = 0, max = 1, step=0.01),
-sliderInput("b", "alpha21:", 0.7,
+sliderInput("b", "alpha21:", 0.45,
                min = 0, max = 1, step=0.01),
 sliderInput("K2", "K2:", 100,
                min = 0, max = 300, step=1),
@@ -141,13 +139,14 @@ lines(times, out$N2, col="red")
 plot(NA,xlim=c(0,input$K1*2),ylim=c(0,input$K2*2), xlab="N1", ylab="N2")
 fld=flowField(compLV, xlim=c(0,input$K1*2), ylim=c(0,input$K2*2), 
 parameters=parms, system="two.dim", add=TRUE)
+legend("topright",
+         legend=c("N1-iso", "N2-iso", "Trajectory"),
+         lty=c(1,1, 1),
+          col=c("black", "red", "black"))
 
 #null clines
 curve((input$K1-x)/input$a,col="black",add=TRUE)
 curve(input$K2-input$b*x,col="red",add=TRUE)
-abline(v=0,col="black")
-abline(h=0,col="red")
-points(0,0,pch=19)
 points(input$K1,0,pch=19)
 points(0,input$K2,pch=19)
 if(!any(c(N1star, N2star)<0)) points(N1star,N2star,pch=19)
@@ -158,3 +157,4 @@ lines(out[,2], out[,3], lwd=2)
 shinyApp(ui, server)
 ```
 
+Reference:

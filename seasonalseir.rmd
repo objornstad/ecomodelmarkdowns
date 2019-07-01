@@ -1,14 +1,14 @@
 ---
 title: "The seasonally forced SEIR model"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad/
 
-This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjornstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email any update to [onb1 at psu dot edu].
+This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run.
 
@@ -29,7 +29,7 @@ The basic equations for the flow of hosts between **S**usceptible, **E**xposed, 
 \end{align}
 Infected individuals will remain in the latent class for an average period of $1/(\sigma + \mu)$ and
  subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for 
- an average time of $1/(\gamma+\mu)$. Assuming sinusoidal forcing on the transmission rate $\beta(t) =  \beta_0 (1 + \beta_1 cos(2 \pi t))$; The mean transmission rate is $\beta_0$ but the realized transmission varies cyclically with a period of one time unit, and the magnitude of the seasonal variation is controlled by the parameter $\beta_1$.  
+ an average time of $1/(\gamma+\mu)$. Assuming sinusoidal forcing on the transmission rate $\beta(t) =  \beta_0 (1 + \beta_1 cos(2 \pi t))$; The mean transmission rate is $\beta_0$ but the realized transmission varies cyclically with a period of one time unit, and the magnitude of the seasonal variation is controlled by the parameter $\beta_1$.  Earn et al. (2000) provides a nice discussion of the model's application to historical measles dynamics.
 
 The  shiny app:
 
@@ -169,3 +169,10 @@ output$plot2 <- renderPlot({
 shinyApp(ui, server)
 ```
 
+
+References:
+
+Bjørnstad, O.N. (2018) Epidemics: models and data using R. Springer.
+
+Earn D.J.D, Rohani P., Bolker B.M. and Grenfell B.T. (2000) A simple model for complex dynamical transitions in epidemics.
+             Science 287: 667-670

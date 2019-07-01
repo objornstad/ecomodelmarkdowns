@@ -1,6 +1,6 @@
 ---
 title: "SIR model with ShinyApp"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
@@ -8,7 +8,7 @@ runtime: shiny
 Version 0.5 June 28, 2019
 https://github.com/objornstad
 
-This Rmarkdown of the SIR model was written by Ottar N. Bjornstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run.
 
@@ -191,6 +191,10 @@ server <- function(input, output) {
 
 shinyApp(ui, server)
 ```
+
+References:
+
+Bjørnstad, O.N. (2018) Epidemics: models and data using R. Springer.
 
 
 

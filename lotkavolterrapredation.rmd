@@ -1,14 +1,14 @@
 ---
 title: "Lotka-Volterra predation model"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5 July 1, 2019 
 https://github.com/objornstad/
 
-This Rmarkdown of the Lotka-Volterra predation model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+This Rmarkdown of the Lotka-Volterra predation model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
 ```{r}
@@ -28,6 +28,7 @@ Prey are assumed to grow exponentially at a rate, $r$. Predators are feeding at 
 The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
 equations $dN/dt=0$ and $dP/dt=0$ and partitions the phase plane into regions 
 were $N$ and $P$ are increasing and decreasing. 
+
 The $N$-isocline is $$P^* = r/a$$
 and the $P$-isocline is $$N^* = g/b$$ 
 
@@ -46,7 +47,7 @@ ui = fluidPage(
       background-color: #ECECEC
     }")
   )),
-titlePanel("Lotka-Volterra predation model"),
+titlePanel(""),
 fluidRow(
 column(4, id = "sidebar2",
 fluidRow(column(5, id = "sidebar1",
@@ -123,7 +124,7 @@ lines(times, out$P, col="red")
         lty=c(1,1),
          col=c("black", "red"))
 
-plot(out$N, out$P, ylab="predator", xlab="prey", type="l", xlim=range(out[,2]), ylim=range(out[,3]))
+plot(out$N, out$P, ylab="Predator (P)", xlab="Prey (N)", type="l", xlim=range(out[,2]), ylim=range(out[,3]))
 abline(h=Pstar, col = "black")
 abline(v=Nstar, col = "red")
 fld=flowField(LV, xlim=range(out[,2]), ylim=range(out[,3]), 
@@ -136,3 +137,4 @@ points(Nstar,Pstar, pch = 19)
 shinyApp(ui, server)
 ```
 
+Reference:

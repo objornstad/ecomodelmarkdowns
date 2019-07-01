@@ -1,14 +1,14 @@
 ---
 title: "Ricker model with ShinyApp"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019
+Version 0.5.1 July 1, 2019
 https://github.com/objornstad
 
-This Rmarkdown of the Ricker ('discrete logistic') model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of the Ricker ('discrete logistic') model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny package to be installed to run. The argument Tmax specifies how many generations to run the model.
 
@@ -86,6 +86,6 @@ shinyApp(ui, server)
 
 Reference:
 
-Ricker WE (1954) Stock and recruitment. 
+Ricker, W.E. (1954) Stock and recruitment. 
               Journal of Fishery Research Board Canada 11: 559-623
 

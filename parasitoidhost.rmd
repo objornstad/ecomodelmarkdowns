@@ -1,14 +1,14 @@
 ---
 title: "Parasitoid-host models with embedded ShinyApps"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad/oshinys
 
-This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-binomial (May 1978) parasitoid-host model was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-binomial (May 1978) parasitoid-host model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
 The app requires the shiny package to be installed to run. 
 ```{r}
@@ -217,6 +217,8 @@ shinyApp(ui, server)
 
 References:
 
-May RM (1978) Host-parasitoid systems in patchy environments: a phenomenological model. J Anim Ecol 47: 833-843
+Bjørnstad, O.N. (2018) Epidemics: models and data using R. Springer.
 
-Nicholson AJ, Bailey VA (1935) The balance of animal populations. Proceedings of the Zoological Society of London 3: 551-598.
+May, R.M. (1978) Host-parasitoid systems in patchy environments: a phenomenological model. J Anim Ecol 47: 833-843
+
+Nicholson A.J. and Bailey V.A. (1935) The balance of animal populations. Proceedings of the Zoological Society of London 3: 551-598.

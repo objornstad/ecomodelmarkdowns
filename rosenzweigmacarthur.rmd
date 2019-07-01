@@ -1,14 +1,14 @@
 ---
 title: "Rosenzweig-MacArthur predator-prey model"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad
 
-This Rmarkdown of the Rosenzweig-MacArthur predator-prey model was written by Ottar N. Bjornstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of the Rosenzweig-MacArthur predator-prey model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
 
@@ -192,6 +192,7 @@ parameters=parms, system="two.dim", add=TRUE)
 shinyApp(ui, server)
 ```
 
-Reference:\\
-Rosenzweig ML, MacArthur RH (1963) Graphical representation 
+Reference:
+
+Rosenzweig, M.L. and MacArthur, R.H. (1963) Graphical representation 
               and stability conditions of predator-prey interactions. Am Nat 97: 209-223

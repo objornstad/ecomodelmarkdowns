@@ -1,14 +1,14 @@
 ---
 title: "LPA tribolium model"
-author: Ottar N. Bjornstad
+author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019 
+Version 0.5.1 July 1, 2019 
 https://github.com/objornstad/
 
-This Rmarkdown of the LPA tribolium was written by Ottar N. Bjornstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
+This Rmarkdown of the LPA tribolium was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
 
 The app requires the shiny and sctterplot3d packages to be installed to run. 
 ```{r}
@@ -158,5 +158,5 @@ shinyApp(ui, server)
 
 Reference:
 
-Costantino RF, Desharnais RA, Cushing JM, Dennis B (1997) Chaotic dynamics 
+Costantino, R.F., Desharnais, R.A., Cushing, J.M. and Dennis, B. (1997) Chaotic dynamics 
             in an insect population. Science 275: 389-391
