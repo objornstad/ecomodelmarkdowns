@@ -8,9 +8,6 @@ runtime: shiny
 Version 0.5.1 July 1, 2019 
 https://github.com/objornstad
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 This Rmarkdown of a Ross-Macdonald model (Smith et al. 2012) was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
