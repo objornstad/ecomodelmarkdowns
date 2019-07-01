@@ -1,4 +1,5 @@
 # ecomodelmarkdowns
+
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
 Current markdowns are
@@ -23,6 +24,7 @@ seasonalseir.rmd - the seasonally forced SEIR model
 sir.rmd - the unforced SIR model
 
 ____
+
 If opened in Rstudio "> Run Document" will run the App.
 
 Otherwise see 
