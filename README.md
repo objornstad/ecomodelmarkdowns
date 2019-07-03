@@ -2,7 +2,7 @@
 
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
-Current markdowns are
+Current markdowns (Version 0.5.2, July, 2019) are: 
 _____
 
 lotkavolterracompetition.rmd - Lotka-Volterra competion model

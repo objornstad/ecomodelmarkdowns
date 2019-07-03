@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5 June 28, 2019
+Version 0.5.2 July 3, 2019
 https://github.com/objornstad
 
 This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
@@ -189,7 +189,7 @@ server <- function(input, output) {
    })
   } #End of server()
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(height = 500))
 ```
 
 References:

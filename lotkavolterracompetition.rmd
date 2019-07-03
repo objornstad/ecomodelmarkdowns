@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.1 July 1, 2019 
+Version 0.5.2 July 3, 2019 
 https://github.com/objornstad/
 
 This Rmarkdown of the Lotka-Volterra competition model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
@@ -44,7 +44,7 @@ ui = fluidPage(
   tags$head(tags$style(
     HTML('
          #sidebar1 {
-            background-color: #D3D3D3;
+            background-color: #ECECEC;
         }
     
     #sidebar2 {
@@ -154,7 +154,7 @@ lines(out[,2], out[,3], lwd=2)
     })
    }
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(height =530))
 ```
 
 Reference:

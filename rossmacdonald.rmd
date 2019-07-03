@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.1 July 1, 2019 
+Version 0.5.2 July 3, 2019 
 https://github.com/objornstad
 
 This Rmarkdown of a Ross-Macdonald model (Smith et al. 2012) was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
@@ -109,7 +109,7 @@ legend("topleft", c("H isocline", "M isocline", "Trajectory"), lty=c(1,1,0), col
    })
   }
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(height = 680))
 ```
 
 References:

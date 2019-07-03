@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.1 July 1, 2019 
+Version 0.5.2 July 3, 2019 
 https://github.com/objornstad/
 
 This Rmarkdown of the LPA tribolium was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
@@ -153,7 +153,7 @@ scatterplot3d(x=out[input$T[1]:input$T[2],1], y=out[input$T[1]:input$T[2],2],
 
   }
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(height = 530))
 ```
 
 Reference:
