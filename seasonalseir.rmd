@@ -15,7 +15,6 @@ The app requires the shiny, deSolve and phaseR packages to be installed to run.
 ```{r}
 require(shiny)
 require(deSolve)
-require(phaseR)
 ```
 
 The basic equations for the flow of hosts between **S**usceptible, **E**xposed, **I**nfectious and **R**ecovered
@@ -56,7 +55,8 @@ sliderInput("mu", "birth rate (per 1000):", 0.02,
               min = 0, max = .1),
 sliderInput("T", "Time range:",
                   min = 0, max = 100, value = c(81,100)),
-checkboxInput("lg", "un-Log", TRUE)
+checkboxInput("lg", "un-Log", TRUE),
+width=3
 ),
 mainPanel(
   tabsetPanel(
@@ -166,7 +166,7 @@ output$plot2 <- renderPlot({
   }
 
 
-shinyApp(ui, server, options = list(height = 700))
+shinyApp(ui, server, options = list(height = 770))
 ```
 
 
