@@ -13,6 +13,8 @@ lpatribolium.rmd - LPA Tribolium model
 
 parasitoidhost.rmd - Nicholson-Bailey Host-Parasitoid model AND May's Negative-Binomial parasitoid-host model
 
+spatialparasitoidhost.rmd - Coupled map lattice model of spatially extended host-parasitoid dynamics
+
 ricker.rmd - The Ricker ('discrete logisitic') model
 
 rosenzweigmacarthur.rmd - Rosenzweig-MacArthur Predator-Prey model
