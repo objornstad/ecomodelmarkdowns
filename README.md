@@ -11,6 +11,8 @@ lotkavolterrapredation.rmd - Lotka-Volterra predation model
 
 lpatribolium.rmd - LPA Tribolium model
 
+outbreakresponsevaccination.rmd -  ORV model based on the SIR with vaccination campaigns 
+
 parasitoidhost.rmd - Nicholson-Bailey Host-Parasitoid model AND May's Negative-Binomial parasitoid-host model
 
 spatialparasitoidhost.rmd - Coupled map lattice model of spatially extended host-parasitoid dynamics
