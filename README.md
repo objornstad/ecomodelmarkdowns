@@ -9,7 +9,7 @@ lotkavolterracompetition.rmd - Lotka-Volterra competion model
 
 lotkavolterrapredation.rmd - Lotka-Volterra predation model
 
-lpatribolium.rmd - LPA Tribolium model
+lpatribolium.rmd - Larvae-Pupae-Adult Tribolium model
 
 outbreakresponsevaccination.rmd -  ORV model based on the SIR with vaccination campaigns 
 
