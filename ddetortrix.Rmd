@@ -1,0 +1,349 @@
+---
+title: "The tea tortix DDE model"
+author: William A. Nelson and Ottar N. Bjørnstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.2-1 September 27, 2019 
+https://github.com/objornstad/
+
+This Rmarkdown of the seasonally forced temperature-dependent Tea tortrix DDE model (Nelson et al. 2013) was written by William A. Nelson and Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
+
+The objective is to study how temperature affects population dynamics of multivoltine insects using the formalism laid out by Nisbet and Gurney (1983) on the "The systematic formulation of population-models for insects with dynamically varying instar duration". The derivation of equations are laid out in Appendix A of Nelson et al. (2013) -- see below for details.
+
+Temperature is assumed to vary in a sinusoidal fashion around some mean and amplitude. The model is integrated in physiological time and then converted back.  
+
+The app requires the shiny and PBSddesolve packages to be installed to run. "Run document" in Rstudio will launch the App.
+
+```{r, include=FALSE}
+require(shiny)
+require(PBSddesolve)
+```
+
+The  shiny app:
+```{r, echo=FALSE}
+# Launch a shiny-app simulating the seasonal Tea tortrix DDE model
+# This creates the User Interface (UI)
+ui = pageWithSidebar(
+headerPanel(""),
+sidebarPanel(
+sliderInput("T.mean", "Mean T:", 20,
+              min = 5, max = 40,),
+sliderInput("T.amp", "T amp:", 10,
+              min = 0, max = 35),
+sliderInput("dA", "Adult Mortality scalar", 0.013,
+              min = 0, max = 0.1),
+sliderInput("b0", "Birth scalar:", 5.69,
+              min = 0, max = 10),
+sliderInput("T", "Time range:",
+                  min = 0, max = 20, value = c(1,6)),
+checkboxInput("lg", "Log", FALSE), 
+width=3
+),
+mainPanel(
+  tabsetPanel(
+      tabPanel("Time", plotOutput("plot1")), 
+      tabPanel("Physiological time", plotOutput("plot2")), 
+      tabPanel("Phase plane", plotOutput("plot3"))
+  
+  )
+)
+)
+
+# This creates the 'behind the scenes' code (Server)
+server = function(input, output) {
+	model_FixedDelay=function(t,y,p){
+		#///local parameter names\\\
+		Eo=p[1]; Lo=p[2]; Po=p[3]; Ao=p[4]; b0=p[5]; alphaE=p[6]; alphaL=p[7]; alphaP=p[8]; alphaA=p[9]
+		beta=p[10]; gammaC=p[11]; betaW=p[12]; dW=p[13]; dE=p[14]; dL1=p[15]; dP=p[16]; dA=p[17]; dL2=p[18]
+		T.amp=p[19];T.mean=p[20]
+		
+		#///local variable names\\\
+		tt=y[1];A=y[2];L=y[3];dSE=y[4];dSL=y[5];dSP=y[6];dSA=y[7]
+		
+		#///temperature function\\\
+		M=T.mean+T.amp*sin(2*pi*(tt-125.7)/365)
+	
+		#///pastvalues\\\
+		TE=1/alphaE; TL=TE+1/alphaL; TP=TL+1/alphaP; TA=TP+1/alphaA	#cumulative delays
+		#one stage lags
+		if(t > TE)				lag.E1=pastvalue(t-TE)
+		if(t>1/alphaL)		lag.L1=pastvalue(t-1/alphaL)
+		if(t>1/alphaP)		lag.P1=pastvalue(t-1/alphaP)
+		if(t>1/alphaA)		lag.A1=pastvalue(t-1/alphaA)
+		#two stage lags
+		if(t > TL)				lag.L2=pastvalue(t-TL)
+		if(t>(TP-TE))			lag.P2=pastvalue(t-(TP-TE))
+		if(t>(TA-TL))			lag.A2=pastvalue(t-(TA-TL))
+		#three stage lags
+		if(t > TP)				lag.P3=pastvalue(t-TP)
+		if(t>(TA-TE))			lag.A3=pastvalue(t-(TA-TE))
+		#four stage lags
+		if(t > TA)				lag.A4=pastvalue(t-TA)
+
+		#///mortality functions\\\
+		dSEdt=dE+dW*exp((-betaW-beta)*M)														#Egg mortality 
+		dSLdt=dL1+dL2*L*exp((gammaC-beta)*M)+dW*exp((-betaW-beta)*M)	#Larval mortality 
+		dSPdt=dP+dW*exp((-betaW-beta)*M)														#Pupal mortality 
+		dSAdt=dA+dW*exp((-betaW-beta)*M)														#Adult mortality 
+		
+		#///larval and adult dynamics\\\
+		dAdt=-dSAdt*A;dLdt=-dSLdt*L;
+
+		#///recruitment from birth\\\
+		if(t>TE)		dLdt=dLdt+b0*exp(lag.E1[4]-dSE)*lag.E1[2]
+		if(t>TL)		dLdt=dLdt-b0*exp(lag.L2[4]-lag.L1[4])*exp(lag.L1[5]-dSL)*lag.L2[2]
+		if(t>TP)		dAdt=dAdt+b0*exp(lag.P3[4]-lag.P2[4])*exp(lag.P2[5]-lag.P1[5])*exp(lag.P1[6]-dSP)*lag.P3[2];
+		if(t>TA)	dAdt=dAdt-b0*exp(lag.A4[4]-lag.A3[4])*exp(lag.A3[5]-lag.A2[5])*exp(lag.A2[6]-lag.A1[6])*exp(lag.A1[7]-dSA)*lag.A4[2]
+	
+		#///recruitment from innoculated individuals\\\
+		#through the larval stage
+		if(t<=(TL-TE))					dLdt=dLdt-Lo*alphaL*exp(-dSL) #larvae
+		if(t<=TE)							dLdt=dLdt+Eo*alphaE*exp(-dSE) #eggs
+		if(t>(TL-TE) && t<=TL)		dLdt=dLdt-Eo*alphaE*exp(-lag.L1[4])*exp(lag.L1[5]-dSL); #eggs
+
+		#through the adult stage
+		if(t<=(TA-TP))					dAdt=dAdt-Ao*alphaA*exp(-dSA) #adults
+		if(t<=(TP-TL))				dAdt=dAdt+Po*alphaP*exp(-dSP) #pupae
+		if(t>(1/alphaA) && t<=((1/alphaP)+(1/alphaA)))	dAdt=dAdt-Po*alphaP*exp(-lag.A1[6])*exp(lag.A1[7]-dSA) #pupae
+		if(t>(1/alphaP) && t<=((1/alphaL)+(1/alphaP)))	dAdt=dAdt+Lo*alphaL*exp(-lag.P1[5])*exp(lag.P1[6]-dSP) #larvae
+		if(t>((1/alphaP)+(1/alphaA)) && t<=((1/alphaL)+(1/alphaP)+(1/alphaA))) dAdt=dAdt-Lo*alphaL*exp(-lag.A2[5])*exp(lag.A2[6]-lag.A1[6])*exp(lag.A1[7]-dSA) #larvae
+		if(t>((1/alphaL)+(1/alphaP)) && t<=TP) dAdt=dAdt+Eo*alphaE*exp(-lag.P2[4])*exp(lag.P2[5]-lag.P1[5])*exp(lag.P1[6]-dSP) #eggs
+		if(t>((1/alphaL)+(1/alphaP)+(1/alphaA)) && t<=TA) dAdt=dAdt-Eo*alphaE*exp(-lag.A3[4])*exp(lag.A3[5]-lag.A2[5])*exp(lag.A2[6]-lag.A1[6])*exp(lag.A1[7]-dSA)  #eggs
+
+		#dt/dphi how time changes on the phi scale
+		dtdphi=1/(exp(beta*M))
+
+		return(c(dtdphi,dAdt,dLdt,dSEdt,dSLdt,dSPdt,dSAdt))
+	}
+
+
+  output$plot1 <- renderPlot({
+
+        Eo=1			#initial Egg density
+	Lo=1e5			#initial Larval density
+	Po=1			#initial Pupal density
+	Ao=1			#initial Adult density
+	
+	b0=input$b0		#birth rate scalar
+	
+	alphaE=0.01999583		#Egg development rate scalar
+	alphaL= 0.007311274 	#Larval development rate scalar
+	alphaP=0.02169846 	#Pupal development rate scalar
+	alphaA=0.01295483 	#Adult development rate scalar
+	
+	beta=0.07544568 		#exponent in temperature dependence for development rates and birth rate
+	gammaC=4e-2		#exponent in temperature dependence for larval competition
+
+	dE=0.004953429 #Egg mortality rate scalar
+	dL1=0.001194895 #Larval mortality rate scalar
+	dP=0.004332842 #Pupal mortality rate scalar
+	dA=input$dA #Adult mortality rate scalar 
+	
+	dL2=1E-5		#Larval competition
+	
+	#winter mortality
+	betaW=0.271 
+	dW=0.5614 
+	
+	#temperature dynamics
+	T.mean=input$T.mean
+	T.amp=input$T.amp
+
+	#times  = seq(0, input$T[2]*365, by=1)
+	times=seq(0, -1.5*(exp(-beta*input$T[2])-1)/(beta^2)*365, by=1)
+  	 
+p=c(Eo,Lo,Po,Ao,b0,alphaE,alphaL,alphaP,alphaA,beta,gammaC,betaW,dW,dE,dL1,dP,dA,dL2,T.amp,T.mean)
+yout=dde(y=c(0,Ao,Lo,0,0,0,0),times=times,func=model_FixedDelay,p=p,tol=5e-6,hbsize=100000)
+
+
+#Time window
+  sel=yout[,2]/365>input$T[1]&yout[,2]/365<input$T[2]
+
+#tmp=smooth.spline(yout[sel,1], yout[sel,3], df=50)
+#tmp2=diff(c(0,diff(c(0,tmp$y))>0))
+#tmp2[tmp2<0]=0
+#tmp3=sapply(split(tmp2, ceiling(yout[sel,2]/365)), cumsum)
+  
+#lg=ifelse(input$lg==TRUE, "y", "")
+plot(x=yout[sel, 2]/365, y=yout[sel, 3], ylab="Larvae", xlab="Year", type="l",
+ylim=range(yout[sel,3]), log=ifelse(input$lg==TRUE, "y", "")) 
+   })
+
+output$plot2 <- renderPlot({
+
+        Eo=1			#initial Egg density
+	Lo=1e5			#initial Larval density
+	Po=1			#initial Pupal density
+	Ao=1			#initial Adult density
+	
+	b0=input$b0		#birth rate scalar
+	
+	alphaE=0.01999583		#Egg development rate scalar
+	alphaL= 0.007311274 	#Larval development rate scalar
+	alphaP=0.02169846 	#Pupal development rate scalar
+	alphaA=0.01295483 	#Adult development rate scalar
+	
+	beta=0.07544568 		#exponent in temperature dependence for development rates and birth rate
+	gammaC=4e-2		#exponent in temperature dependence for larval competition
+
+	dE=0.004953429 #Egg mortality rate scalar
+	dL1=0.001194895 #Larval mortality rate scalar
+	dP=0.004332842 #Pupal mortality rate scalar
+	dA=input$dA #Adult mortality rate scalar 
+	
+	dL2=1E-5		#Larval competition
+	
+	#winter mortality
+	betaW=0.271 
+	dW=0.5614 
+	
+	#temperature dynamics
+	T.mean=input$T.mean
+	T.amp=input$T.amp
+
+	#times  = seq(0, input$T[2]*365, by=1)
+	times=seq(0, -1.5*(exp(-beta*input$T[2])-1)/(beta^2)*365, by=1)
+  	 
+p=c(Eo,Lo,Po,Ao,b0,alphaE,alphaL,alphaP,alphaA,beta,gammaC,betaW,dW,dE,dL1,dP,dA,dL2,T.amp,T.mean)
+yout=dde(y=c(0,Ao,Lo,0,0,0,0),times=times,func=model_FixedDelay,p=p,tol=5e-6,hbsize=100000)
+
+
+#Time window
+  sel=yout[,2]/365>input$T[1]&yout[,2]/365<input$T[2]
+  
+  
+#lg=ifelse(input$lg==TRUE, "y", "")
+plot(x=yout[sel, 1]/365, y=yout[sel, 3], ylab="Larvae", xlab="Phi-units", type="l",
+ylim=range(yout[sel,3]), log=ifelse(input$lg==TRUE, "y", "")) 
+   })
+
+  
+output$plot3 <- renderPlot({
+
+  Eo=1			#initial Egg density
+	Lo=1e5			#initial Larval density
+	Po=1			#initial Pupal density
+	Ao=1			#initial Adult density
+	
+	b0=input$b0		#birth rate scalar
+	
+	alphaE=0.01999583		#Egg development rate scalar
+	alphaL= 0.007311274 	#Larval development rate scalar
+	alphaP=0.02169846 	#Pupal development rate scalar
+	alphaA=0.01295483 	#Adult development rate scalar
+	
+	beta=0.07544568 		#exponent in temperature dependence for development rates and birth rate
+	gammaC=4e-2			#exponent in temperature dependence for larval competition
+
+	dE=0.004953429 #Egg mortality rate scalar
+	dL1=0.001194895 #Larval mortality rate scalar
+	dP=0.004332842 #Pupal mortality rate scalar
+	dA=input$dA #Adult mortality rate scalar 
+	
+	dL2=1e-5		#Larval competition
+	
+	#winter mortality
+	betaW=0.271 
+	dW=0.5614 
+	
+	#temperature dynamics
+	T.mean=input$T.mean
+	T.amp=input$T.amp
+
+	#times  = seq(0, input$T[2]*365, by=1)
+	times=seq(0, -1.5*(exp(-beta*input$T[2])-1)/(beta^2)*365, by=1)
+  	 
+p=c(Eo,Lo,Po,Ao,b0,alphaE,alphaL,alphaP,alphaA,beta,gammaC,betaW,dW,dE,dL1,dP,dA,dL2,T.amp,T.mean)
+yout=dde(y=c(0,Ao,Lo,0,0,0,0),times=times,func=model_FixedDelay,p=p,tol=5e-6,hbsize=100000)
+
+
+#Time window
+  sel=yout[,2]/365>input$T[1]&yout[,2]/365<input$T[2]
+
+#lg=ifelse(input$lg==TRUE, "y", "")
+plot(x=yout[sel, 3], y=yout[sel, 4], xlab="Larvae", ylab="Adults", type="l",
+log=ifelse(input$lg==TRUE, "xy", "")) 
+   })
+
+  }
+
+
+shinyApp(ui, server, , options = list(height =720))
+```
+
+
+**MODEL DERIVATION**
+
+The insect life-cycle is described using the following temperature-dependent stage-structure (Yamanaka et al. 2012)
+\begin{eqnarray}
+\frac{dE(t)}{dt}&=&R_E(t)-R_L(t)-\delta_E(t)E(t) \label{eq1a}\\
+\frac{dL(t)}{dt}&=&R_L(t)-R_P(t)-\delta_L(t)L(t) \label{eq1b}\\
+\frac{dP(t)}{dt}&=&R_P(t)-R_A(t)-\delta_P(t)P(t) \label{eq1c}\\
+\frac{dA(t)}{dt}&=&R_A(t)-R_S(t)-\delta_A(t)A(t) \label{eq1d}\\
+\frac{dA_S(t)}{dt}&=&R_S(t)-\delta_{A_S}(t)A_S(t) \label{eq1e}
+\end{eqnarray}
+where $E(t)$ is egg abundance, $L(t)$ is larvae abundance, $P(t)$ is pupal abundance, $A(t)$ is non-senescent adult abundance, and $A_S(t)$ is senescent adult abundance at time $t$. The senescence stage is well supported by adult survivorship curves (Yamanaka et al. 2012), which show low adult mortality for a period of time, followed by a substantially higher mortality rate and a concomitant cessation of reproduction. The per-capita mortality and recruitment rates for stage $i$ are denoted by $\delta_i(t)$ and $R_i(t)$ respectively. Recruitment rates are given by (Nisbet and Gurney 1983)
+\begin{eqnarray*}
+R_E(t)&=&b(t)A(t)\\
+R_L(t)&=&R_E(t-\tau_E(t))S_E(t)\frac{h_E(t)}{h_E\left(t-\tau_E(t)\right)} \label{eq2a}\\
+R_P(t)&=&R_L(t-\tau_L(t))S_L(t)\frac{h_L(t)}{h_L\left(t-\tau_L(t)\right)} \label{eq2b}\\
+R_A(t)&=&R_P(t-\tau_P(t))S_P(t)\frac{h_P(t)}{h_P\left(t-\tau_P(t)\right)} \label{eq2c}\\
+R_S(t)&=&R_A(t-\tau_A(t))S_A(t)\frac{h_A(t)}{h_A\left(t-\tau_A(t)\right)} \label{eq2d}
+\end{eqnarray*}
+where $\tau_i(t)$ is the duration of the $i$th stage, $S_i(t)$ is through-stage survival, $h_i(t)$ is the development rate, and $b(t)$ is the per-capita birth rate.
+Following (Nisbet and Gurney 1983), stage durations ($\tau$) are given by
+\begin{eqnarray*}
+1&=&\int_{t-\tau_E(t)}^t h_E(\xi)d\xi  \label{eq3a}\\
+1&=&\int_{t-\tau_L(t)}^t h_L(\xi)d\xi \label{eq3b} \\
+1&=&\int_{t-\tau_P(t)}^t h_P(\xi)d\xi \label{eq3c}\\
+1&=&\int_{t-\tau_A(t)}^t h_A(\xi)d\xi \label{eq3d}
+\end{eqnarray*}
+and stage survivorships by
+\begin{eqnarray*}
+S_E(t)&=&\exp\left(-\int_{t-\tau_E(t)}^t\delta_E(\xi) d\xi\right)\\
+S_L(t)&=&\exp\left(-\int_{t-\tau_L(t)}^t\delta_L(\xi) d\xi\right)\\
+S_P(t)&=&\exp\left(-\int_{t-\tau_P(t)}^t\delta_P(\xi) d\xi\right)\\
+S_A(t)&=&\exp\left(-\int_{t-\tau_A(t)}^t\delta_A(\xi) d\xi\right)
+\end{eqnarray*}
+
+We define the stage-specific life-history functions for development ($h_i(t)$), birth ($b(t)$) and mortality rates ($g_i(t)$) as
+\begin{eqnarray}
+h_i(t)&=&\alpha_ie^{\beta D(t)}\\
+b(t)&=&b_oe^{\beta D(t)}\\
+g_i(t)&=&d_ie^{\beta D(t)}
+\end{eqnarray}
+
+
+**Default model parameters**
+
+| Parameter    Value               Description
+  ------------ ------------------- --------------------------------------------------------------------------------------
+  $\beta$      $7.545\mbox{e}-2$   Temperature exponent in development and birth rate functions
+  $\alpha_E$   $1.200\mbox{e}-2$   Scalar in egg development rate function
+  $\alpha_L$   $7.311\mbox{e}-3$   Scalar in larvae development rate function
+  $\alpha_P$   $2.170\mbox{e}-2$   Scalar in pupae development rate function
+  $\alpha_A$   $1.295\mbox{e}-2$   Scalar in adult development rate function
+  $d_E$        $4.953\mbox{e}-3$   Scalar in egg mortality rate function
+  $d_L$        $1.195\mbox{e}-3$   Scalar in larval mortality rate function
+  $d_P$        $4.333\mbox{e}-3$   Scalar in pupal mortality rate function
+  $d_A$        $1.343\mbox{e}-2$   Scalar in adult mortality rate function
+  $b_0$        $5.688$             Scalar in birth rate function
+  $\beta_W$    $2.646\mbox{e}-1$   Temperature exponent in winter mortality function
+  $d_{W}$      $5.614\mbox{e}-1$   Temperature scalar in winter mortality function for larval stage
+  $d_{L2}$        $1\mbox{e}-1$                 Scalar for larval density dependence 
+  $\gamma_C$   $4e-2$                 Temperature exponent in larval competition rate function
+
+  : Parameter estimates based on laboratory data.
+
+[\[table1\]]{#table1 label="table 1"}
+
+
+References:
+
+Nelson, W.A., Bjørnstad, O.N. and Yamanaka, T. (2013) Recurrent insect outbreaks caused by temperature-driven changes in system stability. Science, 341(6147), pp.796-799.
+
+Nisbet, R.M. and Gurney, W.S.C. (1983) The systematic formulation of population-models for insects with dynamically varying instar duration. Theoretical Population Biology 23:114-135.
+
+Yamanaka, T., Nelson, W.A., Uchimura, K. and Bjornstad (2012) Generation separation in simple structured life cycles: models and 48 years of field data on a tea tortrix moth. The American Naturalist 179: 95-109
