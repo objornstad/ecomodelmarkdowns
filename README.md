@@ -5,6 +5,8 @@ Stand alone markdowns with embedded shiny apps for various eco and epi models
 Current markdowns (Version 0.5.3, August 26, 2019) are: 
 _____
 
+ddetortrix.rmd - Nilson et al's (2013) model of temperature dependent destabilization of insect dynamics
+
 lotkavolterracompetition.rmd - Lotka-Volterra competion model
 
 lotkavolterrapredation.rmd - Lotka-Volterra predation model
