@@ -157,7 +157,7 @@ output$plot2 <- renderPlot({
   abline(v=1/R0, col="green")
   curve(paras["mu"]*(1-x)/(paras["beta0"]*x), min(out$S), max(out$S), add=TRUE, col="red")
     legend("topright",
-        legend=c("I-socline", "S-isocline"),
+        legend=c("S-isocline", "I-isocline"),
         lty=c(1,1),
          col=c("red", "green"))
  
@@ -172,7 +172,6 @@ shinyApp(ui, server, options = list(height = 770))
 
 References:
 
-Bjørnstad, O.N. (2018) Epidemics: models and data using R. Springer.
+Bjørnstad, O.N. (2018) Epidemics: Models and Data using R. Springer (312 pp) ISBN 978-3-319-97487-3 https://www.springer.com/gp/book/9783319974866
 
-Earn D.J.D, Rohani P., Bolker B.M. and Grenfell B.T. (2000) A simple model for complex dynamical transitions in epidemics.
-             Science 287: 667-670
+Earn D.J.D, Rohani P., Bolker B.M. and Grenfell B.T. (2000) A simple model for complex dynamical transitions in epidemics. Science 287: 667-670
