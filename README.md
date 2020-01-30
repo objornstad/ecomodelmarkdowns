@@ -13,6 +13,8 @@ lotkavolterrapredation.rmd - Lotka-Volterra predation model
 
 lpatribolium.rmd - Larvae-Pupae-Adult Tribolium model
 
+nextgenR0.rmd - general purpose code for cal;cul;ating R0 for compartemental models using next-generation formalism 
+
 outbreakresponsevaccination.rmd -  ORV model based on the SIR with vaccination campaigns 
 
 parasitoidhost.rmd - Nicholson-Bailey Host-Parasitoid model AND May's Negative-Binomial parasitoid-host model
