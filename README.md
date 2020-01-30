@@ -13,7 +13,7 @@ lotkavolterrapredation.rmd - Lotka-Volterra predation model
 
 lpatribolium.rmd - Larvae-Pupae-Adult Tribolium model
 
-nextgenR0.rmd - general purpose code for cal;cul;ating R0 for compartemental models using next-generation formalism 
+nextgenR0.rmd - general purpose code for cal;cul;ating R0 for compartemental models using next-generation formalism (not shiny App)
 
 outbreakresponsevaccination.rmd -  ORV model based on the SIR with vaccination campaigns 
 
