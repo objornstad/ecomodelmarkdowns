@@ -1,0 +1,287 @@
+---
+title: "nextgenR0"
+author: "Ottar N. Bjornstad"
+date: "1/30/2020"
+output: html_document
+---
+
+
+Version 0.1.3 January 31, 2020
+https://github.com/objornstad
+
+This Rmarkdown of a general purpose next-generation $R_0$ calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
+
+**MOTIVATION** For epidemics that are not simple linear chains, it is less straight-forward to calculate $R_0$ from parameterized models using the "logical method". There is  a general "next-generation" approach (https://en.wikipedia.org/wiki/Next-generation_matrix) that work for all compartmental models of any complexity (Diekmann et al 1990). It is done in a sequence of steps: 
+
+-  Identify all $n$ infected compartments, 
+
+-  Construct a $n \times 1$ matrix, $\vec{F}$, that contains expressions for all *completely new* infections entering each infected compartment, 
+
+-  Construct a $n \times 1$ matrix, $\vec{V^-}$, that contains expressions for all losses out of each infected compartment, 
+
+- Construct a $n \times 1$ matrix, $\vec{V^+}$, that contains expressions for all gains into each infected compartment that does **not** represent **new** infections but transfers among infected classes, 
+
+- Construct a $n \times 1$ matrix $\vec{V}= \vec{V^-} - \vec{V^+}$, 
+
+- Generate two $n \times n$ Jacobian matrices, $\vec{f}$ and $\vec{v}$ that are the partial derivatives of $\vec{F}$ and $\vec{V}$ with respect to the $n$ infectious state variables, 
+
+- Evaluate the matrices at the disease free equilibrium (dfe), and finally: 
+
+- $R_0$ is the greatest eigenvalue of $\vec{f} \vec{v}^{-1}|_{dfe}$.
+
+A general purpose function is:
+
+```{r}
+nextgenR0=function(Istates, Flist, Vlist, params, dfe){
+paras = as.list(c(dfe, params)) 
+
+k=0
+vl=fl=list(NULL)
+for(i in 1:length(Istates)){
+assign(paste("f", i, sep = "."), lapply(lapply(Flist,deriv, Istates[i]), eval, paras))
+assign(paste("v", i, sep = "."), lapply(lapply(Vlist,deriv, Istates[i]), eval, paras))
+for(j in 1:length(Istates)){
+k=k+1
+fl[[k]]=attr(eval(as.name(paste("f", i, sep=".")))[[j]], "gradient")[1,]
+vl[[k]]=attr(eval(as.name(paste("v", i, sep=".")))[[j]], "gradient")[1,]
+}
+}
+
+f=matrix(as.numeric(as.matrix(fl)[,1]), ncol=length(Istates))
+v=matrix(as.numeric(as.matrix(vl)[,1]), ncol=length(Istates))
+R0=max(eigen(f%*%solve(v))$values)
+return(R0)
+}
+```
+
+
+**Istates** is a vector naming all *Infected classes*, 
+
+**Flist** is a list that contains equations (*quotes*) for \emph{completely new} infections entering each infected compartment for each class,
+
+**Vlist** is a list that 
+contains the equations (as **quotes()**) for losses out of each infected compartment minus the equations (as **quotes()**) for all gains into each infected compartment that does \emph{not} represent new infections but transfers among infectious classes, 
+
+**params** is a *labeled vector* of parameters,
+
+**dfe** is a a *labeled vector* of all states at the disease-free equilibrium. 
+
+____
+EXAMPLE 1 SEIR (Bjornstad 2018: page 51)
+
+Lets consider the SEIR example. The basic equations for the flow of hosts between **S**usceptible, **E**xposed, **I**nfectious and **R**ecovered
+ compartments are:
+
+\begin{align}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta  I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\mu S}_{\mbox{dead}} \label{eq:sirs}\\
+     \frac{dE}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:sire}\\
+     \frac{dI}{dt} =& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{(\mu  + \alpha)  I}_{\mbox{dead}}  \label{eq:siri}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} \label{eq:sirr}
+\end{align}
+Infected individuals will remain in the latent class for an average period of $1/(\sigma + \mu)$ and subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for an average time of $1/(\gamma+\mu+\alpha)$. The transmission rate is $\beta$.
+
+
+Step 1: Infected classes are $E$ and $I$
+```{r}
+istates=c("E", "I")
+```
+Step 2: All new infections: $dE/dt = \beta S I / N$, $dI/dt =0$
+```{r}
+flist=c(dEdt=quote(beta * S * I / N), dIdt=quote(0))
+```
+Step 3-5
+```{r}
+#All losses $dE/dt= (\mu+\sigma) E$, $dI/dt=(\mu + \alpha + \gamma) I$
+Vm1=quote(mu * E + sigma * E)
+Vm2=quote(mu * I + alpha * I + gamma * I)
+
+#All gained transfers $dE/dt= 0$, $dI/dt=(\sigma) E$
+Vp1=0
+Vp2=quote(sigma * E)
+#Subtract Vp from Vm
+V1=substitute(a-b, list(a=Vm1, b=Vp1))
+V2=substitute(a-b, list(a=Vm2, b=Vp2))
+#Make Vlist
+vlist = c(V1,V2)
+```
+Define parameters
+```{r}
+para = list(mu = 0, alpha = 0, beta = 5, gamma = .8, sigma = 1.2, N = 1)
+```
+Specify disease-free equilibrium
+```{r}
+df = list(S = 1, E = 0, I = 0, R = 0)
+```
+Invoke R0 calculator:
+```{r}
+nextgenR0(Istates=istates, Flist=flist, Vlist=vlist, params=para, dfe=df)
+```
+
+
+
+______
+
+EXAMPLE 2 SEIHFR (Bjornstad 2018, page 53)
+
+Legrand et al (2007) forms the foundation for many of the recent Ebola models. The model has five compartments corresponding to **S**usceptible, **E**xposed, **I**nfectious in community, Infectious in **h**ospital, Dead but not yet buried (**F**), and **R**emoved (either buried or immune). The parameterization used here is motivated by the original formulation of \Legrand et al (2007}, but the notation conforms to the other sections of Bjornstad (2008); Each infectious compartment contributes to the force of infection through their individual $\beta$s. There are two branching-points in the flow: The hospitalization of a fraction $\Theta$ of the infectious cases after an average time of $1/\gamma_h$ days following onset of symptoms, and the death of a fraction $\Lambda$ of the $I$- and $H$-class after an average time of $1/\gamma_f$ days and $1/\eta_f$ days, respectively. For the 1995 DRC outbreak, Legrand et al (2007) assumed that hospitalization affected transmission rates but not duration of infection or probability of dying. Model parameters are as per Bjornstad (2018) Table 3.2 and the model equations are:
+\begin{eqnarray}
+\frac{dS}{dt}&=&-(\beta_i I + \beta_h H +\beta_f F) S / N\\
+\frac{dE}{dt}&=& (\beta_i I + \beta_h H +\beta_f F) S / N - \sigma E\\
+\frac{dI}{dt}&=&\sigma E - \Theta \gamma_h I -(1-\Theta)(1-\Lambda)\gamma_r I - (1-\Theta) \Lambda \gamma_f I\\
+\frac{dH}{dt}&=&\Theta \gamma_h I - \Lambda \eta_f H - (1-\Lambda) \eta_r H\\
+\frac{dF}{dt}&=& (1-\Theta)(1-\Lambda)\gamma_r I+ \Lambda \eta_f H - \chi F\\
+\frac{dR}{dt}&=&(1-\Theta)(1-\Lambda)\gamma_r I + (1-\Lambda) \eta_r H+\chi F
+\end{eqnarray}
+
+
+
+
+Step 1: Infected classes are $E$, $I$, $H$ and $F$
+```{r}
+istates=c("E", "I", "H", "F")
+```
+
+Step 2: All new infections: $dE/dt = \beta S I / N$, $dI/dt = 0$, $dH/dt=0$, and $dF/dt=0$
+```{r}
+flist=c(dEdt=quote(betai * S * I / N + betah* S * H / N +
+   betaf * S * F / N), dIdt=quote(0), dHdt=quote(0), dFdt=quote(0))
+```
+
+Step 3: All losses: $dE^-/dt = \sigma E$, $dI^-/dt = \Theta * \gamma_h * I + (1 - \Theta) * (1-
+   \Lambda) * \gamma_r * I + (1 - \Theta) * \Lambda * 
+   \gamma_f * I$, $dH^-/dt = \Lambda * \eta_f * H + (1 - \Lambda) * \eta_r * H$, and $dF^-/dt=\chi * F$:
+```{r}
+Vm1 = quote(sigma * E)
+Vm2 = quote(Theta * gammah * I + (1 - Theta) * (1-
+   Lambda) * gammar * I + (1 - Theta) * Lambda * 
+   gammaf * I)
+Vm3 = quote(Lambda * etaf * H + (1 - Lambda) * etar * H)
+Vm4 = quote(chi * F)
+```
+
+Step 4: All gained transfers $dE^+/dt =0$, $dI^+/dt=\sigma E$, $dH^+/dt = \Theta \gamma_h I$, and $dF^+/dt=(1 - \Theta) (1 - \Lambda)  \gamma_r  I+ \Lambda  \eta_f  H$
+```{r}
+Vp1 = 0
+Vp2 = quote(sigma * E)
+Vp3 = quote(Theta * gammah * I)
+Vp4 = quote((1 - Theta) * (1 - Lambda) * gammar * I+ 
+   Lambda * etaf * H)
+```
+Step 5: Subtract Vp from Vm and combine into the **vlist**
+```{r}
+vlist = c(substitute(a-b, list(a=Vm1, b=Vp1)),
+substitute(a-b, list(a=Vm2, b=Vp2)),
+substitute(a-b, list(a=Vm3, b=Vp3)),
+substitute(a-b, list(a=Vm4, b=Vp4)))
+```
+Define vector of disease-free state values and parameters from Legrand et al (2007):
+```{r}
+df = list(S = 1,E = 0, I = 0, H = 0, F = 0,R = 0)
+para=c(sigma = 1/7*7, Theta = 0.81, Lambda = 0.81, betai = 0.588, 
+     betah = 0.794, betaf = 7.653, N = 1, gammah = 1/5 * 7,
+     gammaf = 1/9.6 * 7, gammar = 1/10 * 7, etaf = 1/4.6 * 7, 
+     etar = 1/5 * 7, chi = 1/2 * 7)
+```
+Invoke general-purpose $R_0$ calculator:
+```{r}
+nextgenR0(Istates=istates, Flist=flist, Vlist=vlist, params=para, dfe=df)
+```
+
+
+_______
+EXAMPLE 3 (Bjornstad 2018, page 164)
+Coyne at al (1989) developed a compartmental model for rabies in raccoons. Using their notation the flow is from susceptible ($X$), infected but not-yet infectious hosts that eventually becomes rabid ($H_1$), infected hosts that recover with immunity ($H_2$), rabid raccoons (Y), immune raccoons (I) and vaccinated raccoons (V). The total number of raccoons (N) are the sum of these.
+
+The model is:
+
+\begin{align}
+  \frac{dX}{dt} =& a (X + I + V) - \beta X Y - \gamma N X  - (b + c + v) X\\
+  \label{eq:rabiesX}
+  \frac{dH_1}{dt} =& \rho \beta X Y  - \gamma N H_1  - (b + \sigma + c) H_1 \\
+  \label{eq:rabiesH1}
+  \frac{dH_2}{dt} =& (1-\rho) \beta X Y  - \gamma N H_2  - (b + \sigma + c) H_2 \\
+  \label{eq:rabiesH2}
+  \frac{dY}{dt} =& \sigma H_1  - \gamma N Y  - (b + \alpha + c) Y \\
+  \label{eq:rabiesY}
+  \frac{dI}{dt} =& \sigma H_2 - \gamma N I  - (b + c) I \\
+  \label{eq:rabiesI}
+  \frac{dV}{dt} =& v X - \gamma N V  - (b + c) V \\
+  \label{eq:rabiesV}
+  N =& X + H_1 + H_2 + Y + I + V
+\end{align}
+
+The parameters quoted in Coyne at al are:
+
+| Parameter       Description                       Value
+  ------------ ------------------------------------ --------------------
+  a            Birth rate                           1.34/year
+  b            Death rate                           0.836/year
+  r            Intrinsic rate of increase (=a-b)    0.504
+  K            Carrying capacity                    12.69/km$^2$
+  $\gamma$     Index of density dependence (=r/K)   0.0397 km$^2$/year
+  (1-$\rho$)   Probability of recovery              0.20
+  $\sigma$     Rate of transition from latents      7.5/year
+  $\alpha$     Disease induced mortality            66.36/year
+  $\beta$      Transmission rate                    33.25/yr
+  v            Vaccination rate                     Variable
+  c            Culling rate                         Variable
+  ------------ ------------------------------------ --------------------
+  
+
+
+Step 1: Infected classes are $H1$, $H2$ and $Y$ 
+```{r}
+istates=c("H1", "H2", "Y")
+```
+
+Step 2: All new infections: $dH_1/dt = \rho \beta X  Y$, $dH_1/dt = (1-\rho) \beta X  Y$, and $dY/dt=0$
+```{r}
+flist=c(dH1dt=quote(rho*beta*X*Y), ddH2dt=quote((1-rho)*beta*X*Y), dYdt=quote(0))
+```
+
+Step 3: All losses: $dH_1^-/dt = \gamma N H_1 + (b+\sigma+c) H_1$, $dH_2^-/dt = \gamma N H_2 + (b+\sigma+c) H_2$, and $Y^-/dt = \gamma N Y + (b+\alpha+c) Y$:
+```{r}
+Vm1 = quote(gamma*N*H1 + (b+sigma+c)*H1)
+Vm2 = quote(gamma*N*H2 + (b+sigma+c)*H2)
+Vm3 = quote(gamma*N*Y + (b+alpha+c)*Y)
+```
+
+Step 4: All gained transfers $dH_1^+/dt =0$, $dH_2^+/dt=0$, and $dY^+/dt=\sigma H_1$
+```{r}
+Vp1 = quote(0)
+Vp2 = quote(0)
+Vp3 = quote(sigma * H1)
+```
+Step 5: Subtract Vp from Vm and combine into the **vlist**
+```{r}
+vlist = c(substitute(a-b, list(a=Vm1, b=Vp1)),
+substitute(a-b, list(a=Vm2, b=Vp2)),
+substitute(a-b, list(a=Vm3, b=Vp3)))
+```
+Define vector of disease-free state values and parameters from Coyne et al (1989):
+```{r}
+df = list(X = 12.69,H1 = 0, H2 = 0, Y = 0, I = 0)
+para=c(N=12.69, a=1.34, b=0.836, K=12.69, gamma=0.0397, rho=0.8,sigma=7.5,alpha=66.36,beta=33.25,c=0)
+```
+Invoke general-purpose $R_0$ calculator:
+```{r}
+nextgenR0(Istates=istates, Flist=flist, Vlist=vlist, params=para, dfe=df)
+```
+________
+
+References:
+
+Bjørnstad, O.N. (2018) Epidemics: Models and Data using R. Springer (312 pp) ISBN 978-3-319-97487-3 https://www.springer.com/gp/book/9783319974866
+
+Coyne, M., Smith, G.,&McAllister, F. (1989).Mathematic model for the population
+biology of rabies in raccoons in the mid-Atlantic states. American Journal of
+Veterinary Research, 50(12), 2148–2154.
+
+Diekmann, O., Heesterbeek, J. A. P., & Metz, J. A. J. (1990) On the definition
+and the computation of the basic reproduction ratio r0 in models for infectiousdiseases
+in heterogeneous populations. Journal of Mathematical Biology, 28(4),
+365–382.
+
+Legrand, J., Grais, R. F., Boelle, P. Y., Valleron, A. J., & Flahault, A. (2007) Understanding
+the dynamics of ebola epidemics. Epidemiology and Infection, 135(4),
+610–621.
