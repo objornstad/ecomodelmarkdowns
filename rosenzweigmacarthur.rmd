@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.3 August 26, 2019 
+Version 0.5.4 February 4, 2020 
 https://github.com/objornstad
 
 This Rmarkdown of the Rosenzweig-MacArthur predator-prey model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
@@ -20,8 +20,8 @@ require(phaseR)
 
 The basic equations for the consumer-resource interaction between prey (N)  and predators (P) are:
 \begin{align}
-    \frac{dN}{dt} =& \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + P}}_{\mbox{predation}}\\
-     \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + P}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
+    \frac{dN}{dt} =& \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + N}}_{\mbox{predation}}\\
+     \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + n}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
 \end{align}
 
 Prey ($N$) are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. Predators ($P$)are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expectancy of $1/g$.
