@@ -2,7 +2,7 @@
 
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
-Current markdowns (Version 0.5.3, August 26, 2019) are: 
+Current markdowns (November 2, 2021) are: 
 _____
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
