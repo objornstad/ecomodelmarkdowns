@@ -9,9 +9,12 @@ output: html_document
 Version 0.1.3 January 31, 2020
 https://github.com/objornstad
 
-This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
+This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence 
+for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
+The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
 
-**MOTIVATION** For stability analysis, ressonant periodicity, transfer-functions, etc, etc we usually need the Jacobian matrix evaluated with parameters and at some point in the phase plane.
+**MOTIVATION** For stability analysis, ressonant periodicity, transfer-functions, etc, etc we usually need the Jacobian 
+matrix evaluated with parameters and at some point in the phase plane.
 
 A general purpose function is (with Aaron King's one-upmanship at the bottom):
 
@@ -41,7 +44,8 @@ return(J)
 
 **params** is a *labeled vector* of parameters,
 
-**pts** is a a *labeled vector* of the point in the phase plane to evaluate the Jacobian (often the endemic or disease-free equilibrium if working in mathematical epidemiology; or some other equilibrium if working in ecology). 
+**pts** is a a *labeled vector* of the point in the phase plane to evaluate the Jacobian (often the endemic or 
+disease-free equilibrium if working in mathematical epidemiology; or some other equilibrium if working in ecology). 
 
 ____
 EXAMPLE 1 SIR (Bjornstad 2018: page 21)
@@ -55,7 +59,8 @@ Lets consider the SIR example. The basic equations for the flow of hosts between
      \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
 \end{align}
 
-Infected individuals infectious for an average time of $1/(\gamma+\mu)$ time units. The transmission rate is $\beta$. Because **R** is absobing and does not affect dynamics when we work on compartementalfractions ($N = 1$) we omit this equation.
+Infected individuals infectious for an average time of $1/(\gamma+\mu)$ time units. The transmission rate is $\beta$. Because **R** is absobing and 
+does not affect dynamics when we work on compartementalfractions ($N = 1$) we omit this equation.
 
 Step 1: classes are S and I
 
@@ -125,7 +130,12 @@ infectious), **I**nfectious and **R**ecovered compartments in a randomly mixing 
 where, susceptibles are either vaccinated at birth (fraction $p$), or infected at a rate $\beta I / N$.
 Infected individuals will remain in the latent class for an average period of $1/(\sigma +\mu)$ and
  subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for 
- an average time of $1/(\gamma+\mu+\alpha)$; $\alpha$ is the *rate* of disease induced mortality (*not* case fatality rate). By the rules of competing rates , the case fatality rate is $\alpha/(\gamma+\mu+\alpha)$ because during the time an individual is expected to remain in the infectious class the disease is killing them at a rate $\alpha$. By a similar logic, the probability of recovering with immunity (for life in the case of the SEIR model) is $\gamma/(\gamma+\mu+\alpha)$. Putting all these pieces together, and assuming no vaccination, the expected number of secondary cases in a completely susceptible population is thus: probability of making it through latent stage without dying * expected infectious period * transmission rate while infectious. Thus, $R_0 =  \frac{\sigma}{\sigma +\mu} \frac{1}{\gamma+\mu+\alpha} \frac{\beta N}{N} =  \frac{\sigma}{\sigma +\mu} \frac{\beta}{\gamma+\mu+\alpha}$.
+ an average time of $1/(\gamma+\mu+\alpha)$; $\alpha$ is the *rate* of disease induced mortality (*not* case fatality rate). 
+ By the rules of competing rates , the case fatality rate is $\alpha/(\gamma+\mu+\alpha)$ because during the time an individual is expected to
+remain in the infectious class the disease is killing them at a rate $\alpha$. By a similar logic, the probability of recovering with immunity (for life in the 
+case of the SEIR model) is $\gamma/(\gamma+\mu+\alpha)$. Putting all these pieces together, and assuming no vaccination, the expected number of secondary cases in 
+a completely susceptible population is thus: probability of making it through latent stage without dying * expected infectious period * transmission rate while 
+infectious. Thus, $R_0 =  \frac{\sigma}{\sigma +\mu} \frac{1}{\gamma+\mu+\alpha} \frac{\beta N}{N} =  \frac{\sigma}{\sigma +\mu} \frac{\beta}{\gamma+\mu+\alpha}$.
 
 ```{r}
 states2=c("S", "E", "I", "R")
@@ -167,7 +177,9 @@ The basic equations for the  consumer-resource interaction between prey (N)  and
      \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + N}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
 \end{align}
 
-Prey ($N$) are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. Predators ($P$)are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expectancy of $1/g$.
+Prey ($N$) are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. P
+redators ($P$)are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation 
+constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expectancy of $1/g$.
 
 The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
 equations $\frac{dN}{dt} = 0$ and $\frac{dP}{dt} = 0$ and partitions the phase plane into regions 
@@ -206,11 +218,15 @@ Equilibrium is an unstable focus with damping period of:
 ```
 
 Aarons one-upmanship:
-"I can see how useful it will be.  This kind of programming in R seems unavoidably tortuous, but it is amazing how far one can push things in the general lisp-like structure of R.
+"I can see how useful it will be.  This kind of programming in R seems unavoidably tortuous, but it is amazing 
+how far one can push things in the general lisp-like structure of R.
 
-I can't read code without tinkering with it, so I played around a bit with your Jacobian calculator.  I thought it might be interesting to have one that returns a function for the Jacobian that can be evaluated at multiple points.  Then I thought I'd see how far I could go in terms of making the calling syntax simpler.  What do you think of the attached?
+I can't read code without tinkering with it, so I played around a bit with your Jacobian calculator.  I thought it might
+be interesting to have one that returns a function for the Jacobian that can be evaluated at multiple points.  
+Then I thought I'd see how far I could go in terms of making the calling syntax simpler.  What do you think of the attached?
 
-This will only run on the latest R (4.1) because of the native pipes it uses in places.  It would be trivial to remove those, but as you know I am addicted to pipes.  (I got absurdly excited about 4.1)."
+This will only run on the latest R (4.1) because of the native pipes it uses in places.  It would be trivial to 
+remove those, but as you know I am addicted to pipes.  (I got absurdly excited about 4.1)."
 
 
 
@@ -253,16 +269,11 @@ Jacobian <- function (.vars, ...) {
 Some examples:
 ```{r}
 Jacobian(c(x,y),sin(x),cos(x),atan(y/x),tan(x+y)) -> f
-f
-f()
-f(3,2)
 f(y=2,x=3)
 ```
 
 ```{r}
 Jacobian(x,sin(x),cos(x),atan(y/x),tan(x+y),factorial(x)) -> f
-f
-f(x=3)
 f(x=3,y=2)
 ```
 
@@ -278,8 +289,6 @@ c(S,I,R) |>
     dIdt=beta*S*I/(S+I+R)-gamma*I-(mu+alpha)*I,
     dRdt=gamma*I-mu*R
   ) -> f
-```
-
 f
 f(S=0.99,I=0.01,R=0,mu=0.02,beta=400,gamma=26,alpha=1)
 with(
