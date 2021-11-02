@@ -8,7 +8,7 @@ runtime: shiny
 Version 0.5.2 January 23, 2020
 https://github.com/objornstad
 
-This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
+This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
 
 The app requires the shiny and deSolve packages to be installed to run.
 
@@ -88,8 +88,7 @@ mainPanel(
       #Tab 3: MathJax typeset equations 
       tabPanel("Equations", 
            withMathJax(
-            helpText("Susceptible $$\\frac{dS}{dt} = \\mu (N - S) - \\frac{\\beta I S}{N}$$"),
-            helpText("Infecitous $$\\frac{dI}{dt} = \\frac{\\beta I S}{N} - (\\mu+\\sigma) I$$"),
+            helpText("Susceptible \n $$\\frac{dS}{dt} = \\underbrace{\\mu N}_{birth} - \\underbrace{\\mu S})_{death} - \\underbrace{\\frac{\\beta I S}{N}_{infection}$$ \n Infecitous \n $$\\frac{dI}{dt} = \\frac{\\beta I S}{N} - (\\mu+\\sigma) I$$"),
            helpText("Removed $$\\frac{dR}{dt} = \\gamma I - \\mu R$$"),
            helpText("Reproductive ratio $$R_0 =  \\frac{1}{\\gamma+\\mu} \\frac{\\beta N}{N}$$")             
            ))

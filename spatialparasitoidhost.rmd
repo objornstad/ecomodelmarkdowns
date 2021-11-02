@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = FALSE)
 Version 0.5.3 August 31, 2019 
 https://github.com/objornstad/
 
-This Rmarkdown of the Spatially-extewnded parasitoid-host Model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the "epimdr-packag"Epidemics: Models and Data UseR book  (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
+This Rmarkdown of the Spatially-extended parasitoid-host Model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the "epimdr-package for the "Epidemics: Models and Data UseR book (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
 The app requires the shiny and plotly packages to be installed to run.
 

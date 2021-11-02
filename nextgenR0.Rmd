@@ -6,7 +6,7 @@ output: html_document
 ---
 
 
-Version 0.1.3 January 31, 2020
+Version 0.1.4 February 6``, 2020
 https://github.com/objornstad
 
 This Rmarkdown of a general purpose next-generation $R_0$ calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
@@ -57,14 +57,14 @@ return(R0)
 
 **Istates** is a vector naming all *Infected classes*, 
 
-**Flist** is a list that contains equations (*quotes*) for \emph{completely new} infections entering each infected compartment for each class,
+**Flist** is a list that contains equations (**quotes()**) for *completely new* infections entering each infected compartments,
 
 **Vlist** is a list that 
-contains the equations (as **quotes()**) for losses out of each infected compartment minus the equations (as **quotes()**) for all gains into each infected compartment that does \emph{not} represent new infections but transfers among infectious classes, 
+contains the equations (as **quotes()**) for losses out of each infected compartment minus the equations (as **quotes()**) for all gains into each infected compartment that does *not* represent new infections but transfers among infectious classes, 
 
 **params** is a *labeled vector* of parameters,
 
-**dfe** is a a *labeled vector* of all states at the disease-free equilibrium. 
+**dfe** is a *labeled vector* of all states at the disease-free equilibrium. 
 
 ____
 EXAMPLE 1 SEIR (Bjornstad 2018: page 51)

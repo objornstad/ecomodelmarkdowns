@@ -1,0 +1,101 @@
+Step 1: Infected classes are 
+
+I1, R1, J2
+
+Step 2: All new infections: $dE/dt = \beta S I / N$, $dI/dt =0$
+<<c3-s9-1>>=
+F1=quote(beta * S * I / N)
+F2=0
+@
+
+Step 3: All losses $dE/dt= (\mu+\sigma) E$, $dI/dt=(\mu + \alpha + \gamma) I$
+<<c3-s9-2>>=
+Vm1=quote(mu * E + sigma * E)
+Vm2=quote(mu * I + alpha * I + gamma * I)
+@
+
+Step 4 : All gained transfers $dE/dt= 0$, $dI/dt=(\sigma) E$
+<<c3-s9-3>>=
+Vp1=0
+Vp2=quote(sigma * E)
+@
+
+Step 5: Subtract Vp from Vm
+<<c3-s9-4>>=
+V1=substitute(a-b, list(a=Vm1, b=Vp1))
+V2=substitute(a-b, list(a=Vm2, b=Vp2))
+@
+
+Step 6: Generate the partial derivatives for the two Jacobians
+<<c3-s9-5, tidy=FALSE>>=
+f11 = D(F1, "E"); f12 = D(F1, "I")
+f21 = D(F2, "E"); f22 = D(F2, "I")
+
+v11 = D(V1, "E"); v12 = D(V1, "I")
+v21 = D(V2, "E"); v22 = D(V2, "I")
+@
+
+Step 7: Assuming N=1, the disease free equilibrium (dfe) is $S=1, E=0, I=0, R=0$. We also need values for other parameters. Assuming a weekly time-step and something chickenpox-like we may use $\mu=0$, $\alpha=0$, $\beta=5$, $\gamma=.8$, $\sigma=1.2$, and $N=1$.
+<<c3-s9-6, tidy=FALSE>>=
+paras = list(S = 1, E = 0, I = 0, R = 0, mu = 0, 
+   alpha = 0, beta = 5, gamma = .8, sigma = 1.2, N = 1)
+f = with(paras,
+   matrix(c(eval(f11),eval(f12),eval(f21),
+   eval(f22)), nrow = 2, byrow = TRUE))
+v=with(paras,
+   matrix(c(eval(v11),eval(v12),eval(v21),
+   eval(v22)), nrow=2, byrow=TRUE))
+@
+
+Step 8: Calculate the largest eigenvalue of $f \times \mbox{inverse}(v)$. Note that the function for inverting matrices in \texttt{R} is \texttt{solve}. 
+<<c3-s9-7>>=
+max(eigen(f%*%solve(v))$values)
+@
+Let us check that the next-generation method and the ``flow'' method are in agreement recalling that for the SEIR-flow  $R_0 =  \frac{\sigma}{\sigma +\mu} \frac{\beta}{\gamma+\mu+\alpha}$.
+<<c3-s9-8, tidy=FALSE>>=
+with(paras,
+sigma/(sigma+mu)*beta/(gamma+mu+alpha))
+@
+
+Among programers in general and R enthusiasts in particular there is often a bizarre obsession with compact `elegant' code (where elegant usually translates to incomprehensible). While developing this text I wasted a day of work finding that step 3-8 can also be done with:
+<<c3-s9-9, tidy=FALSE>>=
+paras = list(S = 1, E = 0, I = 0, R = 0, mu = 0, 
+   alpha = 0, beta = 5, gamma = .8, sigma = 1.2, N = 1)
+
+
+Flist=c(quote(beta * S * I / N), 0)
+Vm1=quote(mu * E + sigma * E)
+Vm2=quote(mu * I + alpha * I + gamma * I)
+Vp1=0
+Vp2=quote(sigma * E)
+V1=substitute(a-b, list(a=Vm1, b=Vp1))
+V2=substitute(a-b, list(a=Vm2, b=Vp2))
+Vlist = c(V1,V2)
+
+
+
+
+I states are *Infected classes* 
+Istates=c("E", "I")
+
+
+nextgenR0=function(Istates, Flist, Vlist, paras, dfe){
+paras = as.list(c(dfe, paras)) 
+
+k=0
+vl=fl=list(NULL)
+for(i in 1:length(Istates)){
+assign(paste("f", i, sep = "."), lapply(lapply(Flist, deriv, Istates[i]), eval, paras))
+assign(paste("v", i, sep = "."), lapply(lapply(Vlist, deriv, Istates[i]), eval, paras))
+for(j in 1:length(Istates)){
+k=k+1
+fl[[k]]=attr(eval(as.name(paste("f", i, sep=".")))[[j]], "gradient")[1,]
+vl[[k]]=attr(eval(as.name(paste("v", i, sep=".")))[[j]], "gradient")[1,]
+}
+}
+
+f=matrix(as.numeric(as.matrix(fl)[,1]), ncol=length(Istates))
+v=matrix(as.numeric(as.matrix(vl)[,1]), ncol=length(Istates))
+R0=max(eigen(f%*%solve(v))$values)
+return(R0)
+}
