@@ -1,0 +1,296 @@
+---
+title: "jacobian"
+author: "Ottar N. Bjornstad and Aaron King"
+date: "11/02/2021"
+output: html_document
+---
+
+
+Version 0.1.3 January 31, 2020
+https://github.com/objornstad
+
+This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
+
+**MOTIVATION** For stability analysis, ressonant periodicity, transfer-functions, etc, etc we usually need the Jacobian matrix evaluated with parameters and at some point in the phase plane.
+
+A general purpose function is (with Aaron King's one-upmanship at the bottom):
+
+```{r}
+jacobian=function(states, elist, params, pts){
+paras = as.list(c(pts, params)) 
+
+k=0
+jl=list(NULL)
+for(i in 1:length(states)){
+assign(paste("jj", i, sep = "."), lapply(lapply(elist, deriv, states[i]), eval, paras))
+for(j in 1:length(states)){
+k=k+1
+jl[[k]]=attr(eval(as.name(paste("jj", i, sep=".")))[[j]], "gradient")[1,]
+}
+}
+
+J=matrix(as.numeric(as.matrix(jl)[,1]), ncol=length(states))
+return(J)
+}
+```
+
+
+**states** is a vector naming all *state variables*, 
+
+**elist** is a list that contains equations (**quotes**) for all states,
+
+**params** is a *labeled vector* of parameters,
+
+**pts** is a a *labeled vector* of the point in the phase plane to evaluate the Jacobian (often the endemic or disease-free equilibrium if working in mathematical epidemiology; or some other equilibrium if working in ecology). 
+
+____
+EXAMPLE 1 SIR (Bjornstad 2018: page 21)
+
+Lets consider the SIR example. The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
+ compartments are:
+
+\begin{align}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
+     \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}  \label{eq:siri}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
+\end{align}
+
+Infected individuals infectious for an average time of $1/(\gamma+\mu)$ time units. The transmission rate is $\beta$. Because **R** is absobing and does not affect dynamics when we work on compartementalfractions ($N = 1$) we omit this equation.
+
+Step 1: classes are S and I
+
+```{r}
+states=c("S", "I")
+```
+
+Step 2: Equations are:
+```{r}
+elist=c(dSdt = quote(mu * (N  - S)  - beta * S * I / N),
+dIdt = quote(beta * S * I / N - (mu + gamma) * I))
+```
+
+Step 3: Some arbitrary parameters are:
+
+```{r}
+parms  = c(mu = 1/(50*52), N = 1, beta =  2, 
+      gamma = 1/2)
+```
+
+Step 4: for this model the endemic equilibrium is $\{S^∗=\beta/(\gamma+\mu),I^∗=\gamma∗(\beta/(\gamma+\mu)−1)/\beta\}$
+ and the disease-free equilibrium is $\{S^∗=1,I^∗=0\}$
+ 
+```{r}
+eeq=with(as.list(parms), c(I=(gamma+mu)/beta, S=mu*(beta/(gamma+mu)-1)/beta))
+deq = list(S = 1, I = 0, R = 0)
+```
+Invoke Jacobian calculator:
+
+```{r}
+JJ=jacobian(states=states, elist=elist, params=parms, pts=eeq)
+JJ
+```
+Eigen values are:
+```{r}
+eigen(JJ)$value
+```
+A pair of comnplex conjugates. So the endemic equilibrium is a stable focus. The ressonant periodicity is:
+```{r}
+2*pi/Im(eigen(JJ)$value[1])
+```
+We next look at the disease-free equilibrium:
+
+```{r}
+deq = list(S = 1, I = 0, R = 0)
+JJ=jacobian(states=states, elist=elist, params=parms, pts=deq)
+#Eigen values are:
+eigen(JJ)$value
+```
+The dominant EV is real 
+_______
+EXAMPLE 2: SEIR
+
+the SEIR model of the  flow of hosts between **S**usceptible, **E**xposed (but not yet
+infectious), **I**nfectious and **R**ecovered compartments in a randomly mixing population:
+
+\begin{align}
+  \frac{dS}{dt} &=& \underbrace{\mu (N[1-p])}_{\mbox{recruitment}} -\underbrace{\beta  I \frac{S}{N}}_{\mbox{infected}} -\underbrace{\mu S}_{\mbox{dead}}
+  \label{eq:seirs}\\
+ \frac{dE}{dt} &=& \underbrace{\beta I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:seire}\\
+\frac{dI}{dt} &=& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{(\mu +\alpha) I}_{\mbox{dead}}
+  \label{eq:seiri}\\
+  \frac{dR}{dt} &=& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} + \underbrace{\mu N p}_{\mbox{vaccinated}}
+  \label{eq:seirr}
+\end{align}
+
+where, susceptibles are either vaccinated at birth (fraction $p$), or infected at a rate $\beta I / N$.
+Infected individuals will remain in the latent class for an average period of $1/(\sigma +\mu)$ and
+ subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for 
+ an average time of $1/(\gamma+\mu+\alpha)$; $\alpha$ is the *rate* of disease induced mortality (*not* case fatality rate). By the rules of competing rates , the case fatality rate is $\alpha/(\gamma+\mu+\alpha)$ because during the time an individual is expected to remain in the infectious class the disease is killing them at a rate $\alpha$. By a similar logic, the probability of recovering with immunity (for life in the case of the SEIR model) is $\gamma/(\gamma+\mu+\alpha)$. Putting all these pieces together, and assuming no vaccination, the expected number of secondary cases in a completely susceptible population is thus: probability of making it through latent stage without dying * expected infectious period * transmission rate while infectious. Thus, $R_0 =  \frac{\sigma}{\sigma +\mu} \frac{1}{\gamma+\mu+\alpha} \frac{\beta N}{N} =  \frac{\sigma}{\sigma +\mu} \frac{\beta}{\gamma+\mu+\alpha}$.
+
+```{r}
+states2=c("S", "E", "I", "R")
+```
+
+
+```{r}
+elist2=c(dS = quote(mu * (N  - S)  - beta * S * I / N),
+  dE = quote(beta * S * I / N - (mu + sigma) * E),
+  dI = quote(sigma * E - (mu + gamma+alpha) * I),
+ dR = quote(gamma * I - mu * R))
+```
+
+
+
+```{r}
+paras2  = c(mu = 1/50, N = 1, beta =  1000, 
+     sigma = 365/8, gamma = 365/5, alpha=0)
+```
+
+```{r}
+deq2=list(S = 1, E = 0, I = 0, R = 0)
+```
+
+
+```{r}
+JJ=jacobian(states=states2, elist=elist2, params=paras2, pts=deq2)
+eigen(JJ)$value
+```
+Largest eigenvalue is positive and strictly real so the disease-free equilibrium is an unstable node.
+
+
+______
+EXAMPLE 3: The Rosenzweig-MacArthur predator-prey model. 
+
+The basic equations for the  consumer-resource interaction between prey (N)  and predators (P) are:
+\begin{align}
+    \frac{dN}{dt} =& \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + N}}_{\mbox{predation}}\\
+     \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + N}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
+\end{align}
+
+Prey ($N$) are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. Predators ($P$)are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expectancy of $1/g$.
+
+The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
+equations $\frac{dN}{dt} = 0$ and $\frac{dP}{dt} = 0$ and partitions the phase plane into regions 
+were $N$ and $P$ are increasing and decreasing. The $N$-isocline is $P^* = (r-rN/K)(c+N)/a$
+and the P-isocline is $N^* = gc/(b-g)$. The equilibrium is
+\begin{align}
+N^* =& gc/(b-g) \\
+P^* =& (r-rN^*/K)(c+N^*)/a
+\end{align}
+
+```{r}
+states3=c("N", "P")
+```
+
+
+```{r}
+elist3=c(dN = quote(r *N *((K-N)/K) - a *N *P/(c + N)),
+     dP =quote(b*N*P/(c + N) - g*P))
+```
+
+```{r}
+paras3  = c(r=0.1, K=90, a=0.2, c=20, b=0.1, g=0.05)
+```
+
+```{r}
+eq3=with(as.list(paras3), c(N=g*c/(b-g), P=(r-r*g*c/(b-g)/K)*(c+g*c/(b-g))/a))
+```
+
+```{r}
+JJ=jacobian(states=states3, elist=elist3, params=paras3, pts=eq3)
+eigen(JJ)$value
+```
+Equilibrium is an unstable focus with damping period of:
+```{r}
+2*pi/Im(eigen(JJ)$value[1])
+```
+
+Aarons one-upmanship:
+"I can see how useful it will be.  This kind of programming in R seems unavoidably tortuous, but it is amazing how far one can push things in the general lisp-like structure of R.
+
+I can't read code without tinkering with it, so I played around a bit with your Jacobian calculator.  I thought it might be interesting to have one that returns a function for the Jacobian that can be evaluated at multiple points.  Then I thought I'd see how far I could go in terms of making the calling syntax simpler.  What do you think of the attached?
+
+This will only run on the latest R (4.1) because of the native pipes it uses in places.  It would be trivial to remove those, but as you know I am addicted to pipes.  (I got absurdly excited about 4.1)."
+
+
+
+
+```{r}
+stopifnot(getRversion()>="4.1")
+
+Jacobian <- function (.vars, ...) {
+  vf <- substitute(list(...))[-1L]
+  vars <- sapply(substitute(.vars),deparse)
+  if (length(vars)>1) vars <- vars[-1L]
+  sapply(
+    vars,
+    \(var) sapply(vf,D,name=var)
+  ) -> jac
+  dd <- c(length(vf),length(vars))
+  dim(jac) <- NULL
+  dn <- list(
+    ifelse(
+      nzchar(names(vf)),
+      names(vf),
+      sapply(vf,deparse)
+    ),
+    vars
+  )
+  fun <- function (...) {
+    e <- c(as.list(sys.frame(sys.nframe())),...)
+    J <- vapply(jac,eval,numeric(1L),envir=e)
+    dim(J) <- dd
+    dimnames(J) <- dn
+    J
+  }
+  formals(fun) <- eval(
+    parse(text=paste0("alist(",paste0(c(vars,"..."),"=",collapse=","),")"))
+  )
+  fun
+}
+```
+
+Some examples:
+```{r}
+Jacobian(c(x,y),sin(x),cos(x),atan(y/x),tan(x+y)) -> f
+f
+f()
+f(3,2)
+f(y=2,x=3)
+```
+
+```{r}
+Jacobian(x,sin(x),cos(x),atan(y/x),tan(x+y),factorial(x)) -> f
+f
+f(x=3)
+f(x=3,y=2)
+```
+
+```{r}
+Jacobian(c(x,y),A=sin(x),B=cos(x),atan(y/x),D=tan(x+y),factorial(x)) -> f
+f(y=3,x=2)
+```
+
+```{r}
+c(S,I,R) |>
+  Jacobian(
+    dSdt=mu*(S+I+R)-beta*S*I/(S+I+R)-mu*S,
+    dIdt=beta*S*I/(S+I+R)-gamma*I-(mu+alpha)*I,
+    dRdt=gamma*I-mu*R
+  ) -> f
+```
+
+f
+f(S=0.99,I=0.01,R=0,mu=0.02,beta=400,gamma=26,alpha=1)
+with(
+  list(gamma=26,beta=400,alpha=1,mu=0.02),
+  f(
+    S=(gamma+mu)/beta,
+    I=(1-(gamma+mu)/beta)*mu/(gamma+mu),
+    R=(1-(gamma+mu)/beta)*gamma/(gamma+mu),
+    mu=0.02,beta=400,gamma=26,alpha=1
+  )
+)|>
+  eigen()
+
+```
