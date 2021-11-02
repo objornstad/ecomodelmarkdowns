@@ -7,6 +7,8 @@ _____
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
 
+jacobian.rmd - General purpose Jacobian calculator(s)
+
 lotkavolterracompetition.rmd - Lotka-Volterra competion model
 
 lotkavolterrapredation.rmd - Lotka-Volterra predation model
