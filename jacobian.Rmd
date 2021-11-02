@@ -108,7 +108,7 @@ JJ=jacobian(states=states, elist=elist, params=parms, pts=deq)
 #Eigen values are:
 eigen(JJ)$value
 ```
-The dominant EV is real 
+The dominant EV is real, so dfe is unstable (R0>1).
 _______
 EXAMPLE 2: SEIR
 
