@@ -1,0 +1,183 @@
+---
+title: "The seasonally forced SEIR model"
+author: Ottar N. Bjørnstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5.3 June 11, 2022 
+https://github.com/objornstad/
+
+This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
+
+The app requires the shiny, deSolve and phaseR packages to be installed to run.
+
+```{r}
+require(shiny)
+require(deSolve)
+```
+
+
+```{r, out.width="50%", echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f3-7-seirflows.png?raw=true")
+```
+
+
+The basic equations for the flow of hosts between **S**usceptible, **E**xposed, **I**nfectious and **R**ecovered
+ compartments are:
+
+\begin{align}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta (t)  I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\mu S}_{\mbox{dead}} \label{eq:sirs}\\
+     \frac{dE}{dt} =& \underbrace{\beta (t) I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:sire}\\
+     \frac{dI}{dt} =& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:siri}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} \label{eq:sirr}
+\end{align}
+Infected individuals will remain in the latent class for an average period of $1/(\sigma + \mu)$ and
+ subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for 
+ an average time of $1/(\gamma+\mu)$. Assuming sinusoidal forcing on the transmission rate $\beta(t) =  \beta_0 (1 + \beta_1 cos(2 \pi t))$; The mean transmission rate is $\beta_0$ but the realized transmission varies cyclically with a period of one time unit, and the magnitude of the seasonal variation is controlled by the parameter $\beta_1$.  Earn et al. (2000) provides a nice discussion of the model's application to historical measles dynamics.
+
+The  shiny app:
+
+```{r, echo=FALSE}
+#' Launch a shiny-app simulating the seasonal SEIR model
+#' @details
+#' Launch app for details
+#' @examples
+#' \dontrun{SEIR.app}
+#' @export
+# This creates the User Interface (UI)
+ui = pageWithSidebar(
+headerPanel("Seasonally forced SEIR"),
+sidebarPanel(
+sliderInput("beta0", "Transmission (yr^-1):", 1000,
+              min = 0, max = 3000),
+sliderInput("beta1", "Seasonality:", 0.2,
+              min = 0, max = 1),
+sliderInput("Ip", "Infectious period (days)", 5,
+              min = 1, max = 100),
+sliderInput("oneoversigma", "Latent period (days):", 8,
+              min = 1, max = 100),
+sliderInput("mu", "birth rate (per 1000):", 0.02,
+              min = 0, max = .1),
+sliderInput("T", "Time range:",
+                  min = 0, max = 100, value = c(81,100)),
+checkboxInput("lg", "un-Log", TRUE),
+width=3
+),
+mainPanel(
+  tabsetPanel(
+      tabPanel("Time", plotOutput("plot1")), 
+      tabPanel("Phase plane", plotOutput("plot2")),
+       tabPanel("Details", 
+           withMathJax(
+       helpText("MODEL:"),
+            helpText("Susceptible $$\\frac{dS}{dt} = \\mu (N - S) - \\frac{\\beta(t) I S}{N}$$"),
+            helpText("Exposed $$\\frac{dE}{dt} = \\frac{\\beta(t) I S}{N} - (\\mu+\\sigma) E$$"),
+            helpText("Infectious $$\\frac{dI}{dt} = \\sigma E - (\\mu+\\gamma) I$$"),
+           helpText("Removed $$\\frac{dR}{dt} = \\gamma I - \\mu R$$"),
+           helpText("Seasonality $$\\beta(t) =  \\beta_0 (1 + \\beta_1 cos(2 \\pi t))$$"),
+           helpText("Reproductive ratio $$R_0 =  \\frac{\\sigma}{\\sigma +\\mu} \\frac{1}{\\gamma+\\mu} \\frac{\\beta N}{N}$$"),             
+            helpText("REFERENCE: Earn DJD, Rohani P, Bolker BM, Grenfell BT (2000) A simple model for complex dynamical transitions in epidemics.
+             Science 287: 667-670")
+           ))
+  
+  )
+)
+)
+
+# This creates the 'behind the scenes' code (Server)
+server = function(input, output) {
+  seirmod2=function(t, x, params){
+  S=x[1]
+  E=x[2]
+  I=x[3]
+  R=x[4]
+
+  mu=params["mu"]
+  N=params["N"]
+  beta0=params["beta0"]
+  beta1=params["beta1"]
+  sigma=params["sigma"]
+  gamma=params["gamma"]
+
+  dS = mu * (N  - S)  - beta0 * (1+beta1*cos(2*pi*t))* S * I / N
+  dE = beta0 * (1+beta1*cos(2*pi * t))* S * I / N - (mu + sigma) * E
+  dI = sigma * E - (mu + gamma) * I
+  dR = gamma * I - mu * R
+  res=c(dS, dE, dI, dR)
+  list(res)
+} 
+
+
+
+  output$plot1 <- renderPlot({
+
+  times  = seq(0, input$T[2], by=1/100)
+  paras  = c(mu = input$mu, N = 1, beta0 = input$beta0, beta1 = input$beta1, sigma = 365/input$oneoversigma, gamma = 365/input$Ip)
+  xstart = c(S=0.06, E=0, I=0.001, R = 0.939)
+  R0 = round(with(as.list(paras), sigma/(sigma+mu)*beta0/(gamma+mu)), 1)
+ 
+out=ode(y=xstart,
+  times=times,
+  func=seirmod2,
+  parms=paras)
+
+  out=as.data.frame(out)
+
+  sel=out$time>input$T[1]&out$time<input$T[2]
+
+par(mar = c(5,5,2,5))
+#lg=ifelse(input$lg==TRUE, "y", "")
+plot(x=out$time[sel], y=out$I[sel], ylab="fraction", xlab="time", type="l",
+ylim=range(out[sel,-c(1,2, 5)]), xlim=c(input$T[1], input$T[2]), log=ifelse(input$lg==TRUE, "y", ""), col="red")
+ lines(x=out$time, y=out$E, col="blue")
+title(paste("R0=", R0))
+# lines(x=out$time, y=out$S, col="green")
+par(new=T)
+plot(x=out$time, y=out$S, type="l", col="green", axes=FALSE, xlab=NA, ylab=NA, 
+    ylim=range(out[sel,2]), xlim=c(input$T[1], input$T[2]), log=ifelse(input$lg==TRUE, "y", ""))
+axis(side = 4, col="green")
+mtext(side = 4, line = 4, "S", col="green")
+  legend("right",
+        legend=c("I", "E", "S"),
+        lty=c(1,1,1),
+         col=c("red", "blue", "green"))
+   })
+  
+output$plot2 <- renderPlot({
+  times  = seq(0, input$T[2], by=1/100)
+  paras  = c(mu = input$mu, N = 1, beta0 = input$beta0, beta1 = input$beta1, sigma = 365/input$oneoversigma, gamma = 365/input$Ip)
+  xstart = c(S=0.06, E=0, I=0.001, R = 0.939)
+  R0 = with(as.list(paras), sigma/(sigma+mu)*beta0/(gamma+mu))
+ 
+  out=ode(y=xstart,
+  times=times,
+  func=seirmod2,
+  parms=paras)
+
+  out=as.data.frame(out)
+
+  sel=out$time>input$T[1]&out$time<input$T[2]
+
+  plot(out$S[sel], out$I[sel], log=ifelse(input$lg==TRUE, "xy", ""), type="l", xlab="fraction susceptible", ylab="fraction infected")
+  abline(v=1/R0, col="green")
+  curve(paras["mu"]*(1-x)/(paras["beta0"]*x), min(out$S), max(out$S), add=TRUE, col="red")
+    legend("topright",
+        legend=c("S-isocline", "I-isocline"),
+        lty=c(1,1),
+         col=c("red", "green"))
+ 
+  })
+
+  }
+
+
+shinyApp(ui, server, options = list(height = 770))
+```
+
+
+References:
+
+Bjørnstad, O.N. (2018) Epidemics: Models and Data using R. Springer (312 pp) ISBN 978-3-319-97487-3 https://www.springer.com/gp/book/9783319974866
+
+Earn D.J.D, Rohani P., Bolker B.M. and Grenfell B.T. (2000) A simple model for complex dynamical transitions in epidemics. Science 287: 667-670
