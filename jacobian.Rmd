@@ -6,10 +6,10 @@ output: html_document
 ---
 
 
-Version 0.1.3 January 31, 2020
+Version 0.1.5 June 11, 2022
 https://github.com/objornstad
 
-This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence 
+This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and Aaron King is released with a CC-BY-NC lisence 
 for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
 The app was developed as part of the epimdr-project (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
 
@@ -50,8 +50,14 @@ disease-free equilibrium if working in mathematical epidemiology; or some other 
 ____
 EXAMPLE 1 SIR (Bjornstad 2018: page 21)
 
-Lets consider the SIR example. The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
+Lets consider the SIR model. The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
  compartments are:
+
+
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f2-1-sir.png?raw=true")
+```
+
 
 \begin{align}
     \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
@@ -111,8 +117,14 @@ JJ=jacobian(states=states, elist=elist, params=parms, pts=deq)
 eigen(JJ)$value
 ```
 The dominant EV is real 
+
 _______
 EXAMPLE 2: SEIR
+
+
+```{r, out.width="50%", echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f3-7-seirflows.png?raw=true")
+```
 
 the SEIR model of the  flow of hosts between **S**usceptible, **E**xposed (but not yet
 infectious), **I**nfectious and **R**ecovered compartments in a randomly mixing population:
@@ -217,7 +229,8 @@ Equilibrium is an unstable focus with damping period of:
 2*pi/Im(eigen(JJ)$value[1])
 ```
 
-Aarons one-upmanship:
+_______
+MORE EXAMPLES with Aarons one-upmanship:
 "I can see how useful it will be.  This kind of programming in R seems unavoidably tortuous, but it is amazing 
 how far one can push things in the general lisp-like structure of R.
 
@@ -227,8 +240,6 @@ Then I thought I'd see how far I could go in terms of making the calling syntax 
 
 This will only run on the latest R (4.1) because of the native pipes it uses in places.  It would be trivial to 
 remove those, but as you know I am addicted to pipes.  (I got absurdly excited about 4.1)."
-
-
 
 
 ```{r}
