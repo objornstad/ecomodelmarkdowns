@@ -2,7 +2,7 @@
 
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
-Current markdowns (November 2, 2021) are: 
+Current markdowns (June 11, 2022) are: 
 _____
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
@@ -37,9 +37,3 @@ ____
 
 
 If opened in Rstudio "> Run Document" will run the App.
-
-Otherwise see 
-
-https://github.com/objornstad/oshinys
-
-for other ways of access.
