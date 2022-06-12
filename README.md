@@ -2,7 +2,7 @@
 
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
-Current markdowns (June 11, 2022) are: 
+Current markdowns (June 11, 2022) are:
 _____
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
@@ -17,7 +17,7 @@ lpatribolium.rmd - Larvae-Pupae-Adult Tribolium model
 
 nextgenR0.rmd - general purpose code for calculating R0 for compartemental models using next-generation formalism (not shiny App)
 
-outbreakresponsevaccination.rmd -  ORV model based on the SIR with vaccination campaigns 
+outbreakresponsevaccination.rmd - ORV model based on the SIR with vaccination campaigns
 
 parasitoidhost.rmd - Nicholson-Bailey Host-Parasitoid model AND May's Negative-Binomial parasitoid-host model
 
@@ -33,7 +33,13 @@ sir.rmd - the unforced SIR model
 
 spatialparasitoidhost.rmd - Coupled map lattice model of spatially extended host-parasitoid dynamics
 
-____
+In addition I recommend taking a peak at: 
 
+SIR: https://martinkrz.github.io/posepi1/
+
+SEIRS: https://martinkrz.github.io/posepi2/
+
+EVPI: https://martinkrz.github.io/posepi3/
+____
 
 If opened in Rstudio "> Run Document" will run the App.
