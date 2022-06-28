@@ -1,7 +1,7 @@
 ---
 title: "Coupled Map Lattice model of larch budmoth"
 author: "Ottar N. Bjornstad"
-date: "6/27/2019"
+date: "6/28/2022"
 output: html_document
 runtime: shiny
 ---
@@ -10,7 +10,7 @@ runtime: shiny
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-Version 0.5.3 June 31, 2022 
+Version 0.5-4 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the Spatially-extended larch budmoth model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
@@ -18,14 +18,15 @@ This Rmarkdown of the Spatially-extended larch budmoth model was written by Otta
 The app requires the shiny and plotly packages to be installed to run.
 
 The larch budmoth model developed in Turhin (2003) assumes an intrinisc rate of increase of the host ($r$) towards a carrying capacity ($K$) according to a logistic curve, random search by parasitoids with an assymptoting host escape probability of $-\exp(a P)/(1+\exp(a P))$) as a function of parasitoid density, where $a$ is parasitoid search efficiency and $w$ is scaling factor. The equations for the number of host, $H$, and parasitoids, $P$, in the next generation is then:
-\begin{eqnarray}
-&H_{t+1} & = \underbrace{H_t \exp(r (1-\frac{H_t}{K}))}_{\substack{\mbox{logistic larval} \\ \mbox{recruitment}}} \underbrace{(\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})}_{\substack{\mbox{density dependent} \\ \mbox{attack}}}\\
-&P_{t+1} & = H_t \exp(r (1-\frac{H_t}{K})) (1-\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})\\
-\end{eqnarray}
+
+$\begin{aligned}
+H_{t+1} & = \underbrace{H_t \exp(r (1-\frac{H_t}{K}))}_{\substack{\mbox{logistic larval} \\ \mbox{recruitment}}} \underbrace{(\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})}_{\substack{\mbox{density dependent} \\ \mbox{attack}}}\\
+P_{t+1} & = H_t \exp(r (1-\frac{H_t}{K})) (1-\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})\\
+\end{aligned}$
 
 The spatially extended coupled-map lattice model due to Bjornstad et al. (2002) rendered in the below interactive shinyApp was an attempt to understand the apparent wave-like spread of outbreaks of the larch budmoth with 10-year recurrences across the European Alps as shown in this animated gif:
 
-```{r, out.width="50%", echo=FALSE, fig.align='center'}
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/lbm.gif?raw=true")
 ```
 
@@ -154,8 +155,9 @@ ggplotly(anim)
 shinyApp(ui, server, options = list(height = 750))
 ```
 
-With default parameters but varying host and parasitiod mobility a rough map of the emergent spatiotemporal dynamics is:
-```{r, out.width="50%", echo=FALSE, fig.align='center'}
+With default parameters but varying host (x-axis) and parasitiod mobility (y-axis) a rough map of the emergent spatiotemporal dynamics is (Bjornstad et al. 2002):
+
+```{r, out.width="30%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/lbmmod.gif?raw=true")
 ```
 

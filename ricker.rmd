@@ -1,11 +1,11 @@
 ---
-title: "Ricker model with ShinyApp"
+title: "Ricker model"
 author: Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5.2 July 3, 2019
+Version 0.5-8 June 28, 2022
 https://github.com/objornstad
 
 This Rmarkdown of the Ricker ('discrete logistic') model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
@@ -17,9 +17,10 @@ require(shiny)
 ```
 
 The basic equation is:
-\begin{align}
+
+$\begin{aligned}
   X_{t+1} = X_t e^{(r (1 - X_t/K))}
-\end{align}
+\end{aligned}$
 
 
 The  shiny app:

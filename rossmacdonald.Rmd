@@ -1,0 +1,130 @@
+---
+title: "Ross-Macdonald model with embedded ShinyApp"
+author: Ottar N. Bjørnstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5.8 June 28, 2022 
+https://github.com/objornstad
+
+This Rmarkdown of a Ross-Macdonald model (Smith et al. 2012) was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny and deSolve packages to be installed to run. 
+
+```{r, echo=FALSE}
+require(shiny)
+require(deSolve)
+require(phaseR)
+```
+
+
+```{r, out.width="30%", echo=FALSE, fig.align='left'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f8-9a-ross.png?raw=true")
+```
+
+
+
+The basic equations due to Aaron and May (1982) are:
+
+$\begin{aligned}
+dx/dt &= (a b Y / X) y (1-x) -\gamma x \\
+dy/dt &= a c x (1-y)-  \mu y,
+\end{aligned}$
+
+where $x$ is the fraction of infected humans, $y$ is fraction of infected mosquitos, m = Y/X is mosquito-to-human ratio, $\gamma$ is human recovery rate, $1/\mu$ is mosquito life expectancy, $a$ is biting rate (1 / gonotrophic cycle duration), $b$ is human probability of getting infected by infected mosquito, $c$ is probability of mosquito infection from infected human.
+
+The isoclines (sometimes called the nullclines) in this system are given by the solution to the 
+equations $dx/dt=0$ and $dy/dt=0$ and partitions the phase plane into regions 
+were $x$ and $y$ are increasing and decreasing. 
+
+$\begin{aligned}
+x^*=\frac{\gamma x}{(a b m)(1-x)}\\
+y^* =a c x / (a c x + \mu)
+\end{aligned}$
+
+The reproduction number ($R_0$) and endemic equilibrium ($\{x^*, y^*\}$) are:
+
+$\begin{aligned}
+R_0 &= m a^2 b c / \mu \gamma\\
+x^* &=(R_0-1)/[R_0 + a c / \mu]\\
+y^* &=(\frac{R_0 - 1}{R_0})(\frac{ac/\mu}{1+ac/\mu})
+\end{aligned}$
+
+
+
+The shiny app:
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui <- pageWithSidebar(
+headerPanel(""),
+sidebarPanel(
+sliderInput("gamma", "gamma", 1/7,
+              min = 0, max = 1),
+sliderInput("a", "a", 1/4,
+              min = 0, max = 1),
+sliderInput("b", "b", 0.1,
+              min = 0, max = 1),
+sliderInput("c", "c", 1,
+              min = 0, max = 1),
+sliderInput("mu", "mu", 1/7,
+              min = 0, max = 1),
+sliderInput("m", "m", 50,
+              min = 1, max = 200)
+),
+mainPanel(
+  plotOutput("plot1", height = 500)
+)
+)
+
+
+# This creates the 'behind the scenes' code (Server)
+server <- function(input, output) {
+grfn=function(t, y, parameters){
+  X=y[1]
+  Y=y[2]
+  with(as.list(parameters),{
+  dx=a*b*m*Y*(1-X)-gamma*X
+  dy=a*c*X*(1-Y)-mu*Y
+  gr=c(dx, dy)
+  list(gr)
+  })
+}
+
+
+  output$plot1 <- renderPlot({
+times=seq(0, 365*2, by=.1)
+
+parameters  = c(gamma = input$gamma, a =  input$a, b=input$b, c=input$c, mu=input$mu, m=input$m)
+start=c(0.01, 0.01)
+
+out=ode(y=start,
+  times=times,
+  func=grfn,
+  parms=parameters)
+
+  out=as.data.frame(out)
+
+with(as.list(parameters),{
+curve(gamma*x/((a*b*m)*(1-x)), 0,1, ylim=c(0,1), xlab="Human prevalence (x)", ylab="Mosquito prevalence (y)")
+R0=m*a^2*b*c/(mu*gamma)
+title(paste ("R0=",round(R0,2)))
+curve(a*c*x/(a*c*x+mu), 0,1, add=TRUE, col="red")
+fld=flowField(grfn, xlim=c(0,1), ylim=c(0,1), 
+parameters=parameters, system="two.dim", add=TRUE,
+ylab="H", xlab="M")
+
+})
+points(out[,2], out[, 3])
+legend("topleft", c("H isocline", "M isocline", "Trajectory"), lty=c(1,1,0), col=c(1,2, 1), pch=c(NA,NA, 1))
+   })
+  }
+
+shinyApp(ui, server, options = list(height = 680))
+```
+
+References:
+Aron, J.L. and May, R.M. 1982. The population dynamics of malaria. In: The population dynamics of infectious diseases: theory and applications (pp. 139-179). Springer, Boston, MA.
+
+Smith, D.L., Battle, K.E., Hay, S.I., Barker, C.M., Scott, T.W. and McKenzie, F.E. 2012. Ross, Macdonald, and a theory for the dynamics and control of mosquito-transmitted pathogens. PLoS pathogens, 8(4), p.e1002588.

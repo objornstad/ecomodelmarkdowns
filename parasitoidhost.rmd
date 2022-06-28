@@ -5,24 +5,25 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.2 July 3, 2019 
-https://github.com/objornstad/oshinys
+Version 0.5-8 June 28, 2022 
+https://github.com/objornstad/
 
 This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-binomial (May 1978) parasitoid-host model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
-The app requires the shiny package to be installed to run. 
-```{r}
+The app requires the shiny package to be installed to run. "Run document" in Rstudio will launch the App.
+
+```{r, include=FALSE}
 require(shiny)
 ```
 
 The Nicholson-Bailey (1935) model assumes a population of randomly searching parasitoids, $P$, parasitizing immature stages of their host, $H$. The host growth rate is $R$ and the parasitoid search efficiency is $a$. Given the random search, the fraction of hosts escaping parasitization is $\mbox{exp}(- a P)$ leading to two equations: 
 
-\begin{align}
+$\begin{aligned}
 H_{t+1} & = \underbrace{R H_t}_{\mbox{reproduction}} \underbrace{e^{-a P_t}}_{\mbox{not parasitized}}\\
 P_{t+1} & =   R H_t  \underbrace{(1-e^{-a P_t}) }_{\mbox{parasitized}}
-\end{align}
+\end{aligned}$
 
-Nicholson and Bailey (1935) showed that the equilibrium $H^* = \frac{\mbox{log}(R)}{a (R-1)}, P^* = \frac{\mbox{log}(R)}{a}$" is an unstable focus leading to increasingly violent consumer-resource cycles.
+Nicholson and Bailey (1935) showed that the equilibrium $\{H^* = \frac{\mbox{log}(R)}{a (R-1)}, P^* = \frac{\mbox{log}(R)}{a}\}$" is an unstable focus leading to increasingly violent consumer-resource cycles.
 
 The Nicholson-Bailey shiny app is:
 
@@ -118,10 +119,12 @@ shinyApp(ui, server, options = list(height = 640))
 ```
 
 May (1978) proposed that heterogeneities in searching can stabilize parasitoid host dynamics. Assuming a negative binomial (rather than Poisson) attack probability the model is:
-\begin{align}
+
+$\begin{aligned}
 H_{t+1} & = R H_t (1+\frac{a P_t}{k})^{-k}\\
 P_{t+1} & = R H_t (1-(1+\frac{a P_t}{k})^{-k}),
-\end{align}
+\end{aligned}$
+
 where $k$ is the aggregation parameter ($k \rightarrow \infty$, Neg Bin $\rightarrow$ Poisson). He coined the CV$^2$-rule which says that if the coefficient-of-variation in attack rate is greater than 1, the parasitoid-host dynamics stabilizes; The CV for the negative binomial being $1/\sqrt{k}$. The equilibrium $P^* = k (R^{1/k}-1) /a, H^*=P^* R / (R-1)$ is either stable or unstable depending on whether k is smaller or greater than 1.
 
 

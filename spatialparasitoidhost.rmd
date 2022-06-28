@@ -10,7 +10,7 @@ runtime: shiny
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-Version 0.5.3 August 31, 2019 
+Version 0.5-4 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the Spatially-extended parasitoid-host Model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the "epimdr-package for the "Epidemics: Models and Data UseR book (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
@@ -18,10 +18,12 @@ This Rmarkdown of the Spatially-extended parasitoid-host Model was written by Ot
 The app requires the shiny and plotly packages to be installed to run.
 
 The Nicholson-Bailey (1935) assumes random search by parasitoids (with a searching efficiency $a$) by the parasitoids. The probability of escaping parasitation is $\exp(-a P_t)$ and the number of host, $H$, and parasitoids, $P$, in the next generation is:
-\begin{eqnarray}
-&H_{t+1} & = R H_t \exp(-a P_t)\\
-&P_{t+1} & = R H_t (1-\exp(-a P_t)),
-\end{eqnarray}
+
+$\begin{aligned}
+H_{t+1} & = R H_t \exp(-a P_t)\\
+P_{t+1} & = R H_t (1-\exp(-a P_t)),
+\end{aligned}$
+
 where $R$ is the average number of offspring per hosts. 
 
 Hassell et al. (1991; see also Bjørnstad and Bascompte 2001) introduced the spatially-extended version of the model which asssumes a lattice landscape where a fraction of hosts and parasitoids disperse to neighboring patches between each generation. The result is a range of emergent spatiotemporal dynamics including spiral waves, spatial chaos and Turing crystals. 
@@ -134,7 +136,7 @@ shinyApp(ui, server, options = list(height = 750))
 
 REFERENCES:
 
-Bjørnstad, O. N., & Bascompte, J. (2001). Synchrony and second-order spatial correlation
+Bjornstad, O. N., & Bascompte, J. (2001). Synchrony and second-order spatial correlation
 in host–parasitoid systems. Journal of Animal Ecology, 70(6), 924–933.
 
 Hassell, M. P., Comins, H. N., & May, R. M. (1991). Spatial structure and chaos in

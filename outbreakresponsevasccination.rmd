@@ -10,14 +10,14 @@ runtime: shiny
 require(deSolve)
 ```
 
-Version 0.5.3 August 31, 2019 
+Version 0.5-8 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of Outbreak Response Vaccination impact was written by Ottar N. Bjørnstad and Matt Ferrari and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of any update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019) and was motivated by the study of Grais et al. (2008).
 
 The app requires the shiny and deSolve packages to be installed to run. "Run document" in Rstudio will launch the App.
 
-The App shows predicted reduction in epidemic size for an Outbreak Response Vaccination Campaign with sensitivity analyses with respect to date of start and various disease parameters.
+The App shows predicted reduction in epidemic size for an Outbreak Response Vaccination Campaign in the face of an SIR epidemicwith sensitivity analyses with respect to date of start and various disease parameters.
 
 
 ```{r, echo=FALSE}

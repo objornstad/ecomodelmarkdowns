@@ -5,13 +5,13 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.2-2 June 11, 2022 
+Version 0.5-8 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the seasonally forced temperature-dependent Tea tortrix DDE model (Nelson et al. 2013) was written by William A. Nelson and Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
 
 
-```{r, out.width="50%", echo=FALSE, fig.align='center'}
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/tortrix.jpg?raw=true")
 ```
 
@@ -282,46 +282,53 @@ shinyApp(ui, server, , options = list(height =720))
 **MODEL DERIVATION**
 
 The insect life-cycle is described using the following temperature-dependent stage-structure (Yamanaka et al. 2012)
-\begin{eqnarray}
+$\begin{aligned}
 \frac{dE(t)}{dt}&=&R_E(t)-R_L(t)-\delta_E(t)E(t) \label{eq1a}\\
 \frac{dL(t)}{dt}&=&R_L(t)-R_P(t)-\delta_L(t)L(t) \label{eq1b}\\
 \frac{dP(t)}{dt}&=&R_P(t)-R_A(t)-\delta_P(t)P(t) \label{eq1c}\\
 \frac{dA(t)}{dt}&=&R_A(t)-R_S(t)-\delta_A(t)A(t) \label{eq1d}\\
-\frac{dA_S(t)}{dt}&=&R_S(t)-\delta_{A_S}(t)A_S(t) \label{eq1e}
-\end{eqnarray}
+\frac{dA_S(t)}{dt}&=&R_S(t)-\delta_{A_S}(t)A_S(t) \label{eq1e},
+\end{aligned}$
+
 where $E(t)$ is egg abundance, $L(t)$ is larvae abundance, $P(t)$ is pupal abundance, $A(t)$ is non-senescent adult abundance, and $A_S(t)$ is senescent adult abundance at time $t$. The senescence stage is well supported by adult survivorship curves (Yamanaka et al. 2012), which show low adult mortality for a period of time, followed by a substantially higher mortality rate and a concomitant cessation of reproduction. The per-capita mortality and recruitment rates for stage $i$ are denoted by $\delta_i(t)$ and $R_i(t)$ respectively. Recruitment rates are given by (Nisbet and Gurney 1983)
-\begin{eqnarray*}
+
+$\begin{aligned}
 R_E(t)&=&b(t)A(t)\\
 R_L(t)&=&R_E(t-\tau_E(t))S_E(t)\frac{h_E(t)}{h_E\left(t-\tau_E(t)\right)} \label{eq2a}\\
 R_P(t)&=&R_L(t-\tau_L(t))S_L(t)\frac{h_L(t)}{h_L\left(t-\tau_L(t)\right)} \label{eq2b}\\
 R_A(t)&=&R_P(t-\tau_P(t))S_P(t)\frac{h_P(t)}{h_P\left(t-\tau_P(t)\right)} \label{eq2c}\\
-R_S(t)&=&R_A(t-\tau_A(t))S_A(t)\frac{h_A(t)}{h_A\left(t-\tau_A(t)\right)} \label{eq2d}
-\end{eqnarray*}
+R_S(t)&=&R_A(t-\tau_A(t))S_A(t)\frac{h_A(t)}{h_A\left(t-\tau_A(t)\right)} \label{eq2d},
+\end{aligned}$
+
 where $\tau_i(t)$ is the duration of the $i$th stage, $S_i(t)$ is through-stage survival, $h_i(t)$ is the development rate, and $b(t)$ is the per-capita birth rate.
 Following (Nisbet and Gurney 1983), stage durations ($\tau$) are given by
-\begin{eqnarray*}
+
+$\begin{aligned}
 1&=&\int_{t-\tau_E(t)}^t h_E(\xi)d\xi  \label{eq3a}\\
 1&=&\int_{t-\tau_L(t)}^t h_L(\xi)d\xi \label{eq3b} \\
 1&=&\int_{t-\tau_P(t)}^t h_P(\xi)d\xi \label{eq3c}\\
 1&=&\int_{t-\tau_A(t)}^t h_A(\xi)d\xi \label{eq3d}
-\end{eqnarray*}
+\end{aligned}$
+
 and stage survivorships by
-\begin{eqnarray*}
+
+$\begin{aligned}
 S_E(t)&=&\exp\left(-\int_{t-\tau_E(t)}^t\delta_E(\xi) d\xi\right)\\
 S_L(t)&=&\exp\left(-\int_{t-\tau_L(t)}^t\delta_L(\xi) d\xi\right)\\
 S_P(t)&=&\exp\left(-\int_{t-\tau_P(t)}^t\delta_P(\xi) d\xi\right)\\
-S_A(t)&=&\exp\left(-\int_{t-\tau_A(t)}^t\delta_A(\xi) d\xi\right)
-\end{eqnarray*}
+S_A(t)&=&\exp\left(-\int_{t-\tau_A(t)}^t\delta_A(\xi) d\xi\right).
+\end{aligned}$
 
-We define the stage-specific life-history functions for development ($h_i(t)$), birth ($b(t)$) and mortality rates ($g_i(t)$) as
-\begin{eqnarray}
+The stage-specific life-history functions for development ($h_i(t)$), birth ($b(t)$) and mortality rates ($g_i(t)$) are
+
+$\begin{aligned}
 h_i(t)&=&\alpha_ie^{\beta D(t)}\\
 b(t)&=&b_oe^{\beta D(t)}\\
 g_i(t)&=&d_ie^{\beta D(t)}
-\end{eqnarray}
+\end{aligned}$
 
 
-**Default model parameters**
+**Default model parameters based on laboratory data**
 
 | Parameter    Value               Description
   ------------ ------------------- --------------------------------------------------------------------------------------
@@ -339,10 +346,6 @@ g_i(t)&=&d_ie^{\beta D(t)}
   $d_{W}$      $5.614\mbox{e}-1$   Temperature scalar in winter mortality function for larval stage
   $d_{L2}$        $1\mbox{e}-1$                 Scalar for larval density dependence 
   $\gamma_C$   $4e-2$                 Temperature exponent in larval competition rate function
-
-  : Parameter estimates based on laboratory data.
-
-[\[table1\]]{#table1 label="table 1"}
 
 
 References:

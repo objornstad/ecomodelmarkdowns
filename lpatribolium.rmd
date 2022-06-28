@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.2 July 3, 2019 
+Version 0.5-8 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the LPA tribolium was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
@@ -17,11 +17,12 @@ require(scatterplot3d)
 ```
 
 The LPA model (Costantino et al 1997) studies the stage-structured cannibalistic interactions among eggs, larvae (L), pupae (P) and adult (A) Tribolium flour beetles. The model uses a difference equation framework with a 2-week time step. basic equations are:
-\begin{align}
+
+$\begin{aligned}
 L_{t+1} & = \underbrace{b A_t}_{\mbox{eggs}} \underbrace{e^{-c_{ea} A_t} e^{-c_{el}L_t}}_{\mbox{not cannibalized}}\\
 P_{t+1} & =   L_t  \underbrace{(1-m_l) }_{\mbox{not died}}\\
 A_{t+1} & =   P_t  \underbrace{e^{-c_{pa} A_t}}_{\mbox{not cannibalized}} + \underbrace{(1-m_a) A_t}_{\mbox{not died}}
-\end{align}
+\end{aligned}$
 
 Adults are assumed to lay $b$ eggs of which a fraction $1-e^{-c_{ea} A_t}$ is cannibalized by adults and $1-e^{-c_{el}L_t}$ by larvae; $c_{ea}$ and $c_{el}$ are cannibalism coefficients. Larvae suffers density independent mortality with probability $m_l$ per biweek. The egg and the larval stages are assumed to be two weeks. A fraction $1-e^{-c_{pa} A_t}$ of the pupae are cannibalized by adults. Adults suffer density independent mortality $m_a$ per biweek.
 

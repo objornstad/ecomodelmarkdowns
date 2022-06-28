@@ -1,12 +1,13 @@
 ---
-title: "jacobian"
+title: "Jacobian"
 author: "Ottar N. Bjornstad and Aaron King"
-date: "11/02/2021"
-output: html_document
+date: "06/28/2022"
+output:
+  html_document: default
 ---
 
 
-Version 0.1.5 June 11, 2022
+Version 0.5-8 June 28, 2022
 https://github.com/objornstad
 
 This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and Aaron King is released with a CC-BY-NC lisence 
@@ -50,20 +51,19 @@ disease-free equilibrium if working in mathematical epidemiology; or some other 
 ____
 EXAMPLE 1 SIR (Bjornstad 2018: page 21)
 
-Lets consider the SIR model. The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
- compartments are:
-
-
 ```{r, out.width="50%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f2-1-sir.png?raw=true")
 ```
 
+Lets consider the SIR model. The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
+ compartments are:
 
-\begin{align}
+
+$\begin{aligned}
     \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
      \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}  \label{eq:siri}\\
      \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
-\end{align}
+\end{aligned}$
 
 Infected individuals infectious for an average time of $1/(\gamma+\mu)$ time units. The transmission rate is $\beta$. Because **R** is absobing and 
 does not affect dynamics when we work on compartementalfractions ($N = 1$) we omit this equation.
@@ -122,22 +122,22 @@ _______
 EXAMPLE 2: SEIR
 
 
-```{r, out.width="50%", echo=FALSE, fig.align='center'}
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f3-7-seirflows.png?raw=true")
 ```
 
 the SEIR model of the  flow of hosts between **S**usceptible, **E**xposed (but not yet
 infectious), **I**nfectious and **R**ecovered compartments in a randomly mixing population:
 
-\begin{align}
-  \frac{dS}{dt} &=& \underbrace{\mu (N[1-p])}_{\mbox{recruitment}} -\underbrace{\beta  I \frac{S}{N}}_{\mbox{infected}} -\underbrace{\mu S}_{\mbox{dead}}
+$\begin{aligned}
+  \frac{dS}{dt} &= \underbrace{\mu (N[1-p])}_{\mbox{recruitment}} -\underbrace{\beta  I \frac{S}{N}}_{\mbox{infected}} -\underbrace{\mu S}_{\mbox{dead}}
   \label{eq:seirs}\\
- \frac{dE}{dt} &=& \underbrace{\beta I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:seire}\\
-\frac{dI}{dt} &=& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{(\mu +\alpha) I}_{\mbox{dead}}
+ \frac{dE}{dt} &= \underbrace{\beta I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:seire}\\
+\frac{dI}{dt} &= \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{(\mu +\alpha) I}_{\mbox{dead}}
   \label{eq:seiri}\\
-  \frac{dR}{dt} &=& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} + \underbrace{\mu N p}_{\mbox{vaccinated}}
+  \frac{dR}{dt} &= \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} + \underbrace{\mu N p}_{\mbox{vaccinated}}
   \label{eq:seirr}
-\end{align}
+\end{aligned}$
 
 where, susceptibles are either vaccinated at birth (fraction $p$), or infected at a rate $\beta I / N$.
 Infected individuals will remain in the latent class for an average period of $1/(\sigma +\mu)$ and
@@ -184,10 +184,11 @@ ______
 EXAMPLE 3: The Rosenzweig-MacArthur predator-prey model. 
 
 The basic equations for the  consumer-resource interaction between prey (N)  and predators (P) are:
-\begin{align}
-    \frac{dN}{dt} =& \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + N}}_{\mbox{predation}}\\
-     \frac{dP}{dt} =& \underbrace{\frac{b N P}{c + N}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
-\end{align}
+
+$\begin{aligned}
+    \frac{dN}{dt} &= \underbrace{r N (\frac{K-N}{K})}_{\mbox{N growth}} - \underbrace{\frac{a N P}{c + N}}_{\mbox{predation}}\\
+     \frac{dP}{dt} &= \underbrace{\frac{b N P}{c + N}}_{\mbox{P growth}} - \underbrace{g P}_{\mbox{P death}}
+\end{aligned}$
 
 Prey ($N$) are assumed to grow acording to the logistic model with a maximum growth rate, $r$ and carrying-capacity, $K$. P
 redators ($P$)are feeding according to a Type-II functional respose with a maximum search efficiency, $a$ and half-saturation 
@@ -195,12 +196,8 @@ constant $c$. Predators have a conversion efficiency of $b/a$ and a life-expecta
 
 The isoclines (sometimes called the nullclines) of this system are given by the solution to the 
 equations $\frac{dN}{dt} = 0$ and $\frac{dP}{dt} = 0$ and partitions the phase plane into regions 
-were $N$ and $P$ are increasing and decreasing. The $N$-isocline is $P^* = (r-rN/K)(c+N)/a$
-and the P-isocline is $N^* = gc/(b-g)$. The equilibrium is
-\begin{align}
-N^* =& gc/(b-g) \\
-P^* =& (r-rN^*/K)(c+N^*)/a
-\end{align}
+were $N$ and $P$ are increasing and decreasing. The $N$-isocline is $P = (r-rN/K)(c+N)/a$
+and the P-isocline is $N = gc/(b-g)$. The equilibrium is $\{N^* = gc/(b-g), P^* = (r-rN^*/K)(c+N^*)/a\}$
 
 ```{r}
 states3=c("N", "P")

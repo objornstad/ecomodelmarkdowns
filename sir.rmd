@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.2 January 23, 2020
+Version 0.5-8 June 28, 2022
 https://github.com/objornstad
 
 This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
@@ -18,13 +18,19 @@ require(deSolve)
 require(phaseR)
 ```
 
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f2-1-sir.png?raw=true")
+```
+
 The basic equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
  compartments are:
-\begin{align}
+ 
+$\begin{aligned}
     \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
      \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}  \label{eq:siri}\\
      \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
-\end{align}
+\end{aligned}$
+
 The assumptions of this version of the SIR model are:
 
  
@@ -56,7 +62,7 @@ were $S$ and $I$ are increasing and decreasing.
 For $N=1$, the $I$-isocline is $S = (\gamma +\mu)/\beta = 1/R_0$
 and the S-isocline is $I= \mu (1/S-1)/\beta$.
 
-The resonant period is $\frac{2 \pi}{\mu (R_0 -1) (\mu + \gamma)}$ 
+The resonant period is $\frac{2 \pi}{\mu (R_0 -1) (\mu + \gamma)}$. 
 
 The  shiny app:
 
@@ -67,14 +73,14 @@ headerPanel(""),
 #The sidebar for parameter input
 sidebarPanel(
 #Sliders:
-sliderInput("beta", "Transmission (yr^-1):", 300,
-              min = 0, max = 1000),
-sliderInput("infper", "Infectious period (days)", 5,
-              min = 1, max = 100),
+sliderInput("beta", "Transmission (yr^-1):", 5,
+              min = 0, max = 10),
+sliderInput("infper", "Infectious period (days)", 3000,
+              min = 1, max = 5000),
 sliderInput("mu", "birth rate:", 5,
               min = 0, max = 100),
 sliderInput("T", "Time range:",
-                  min = 0, max = 1, value = c(0,1)),
+                  min = 0, max = 10, value = c(0,1)),
 width=3
 ),
 #Main panel for figures and equations

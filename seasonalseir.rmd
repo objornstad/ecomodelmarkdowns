@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5.3 June 11, 2022 
+Version 0.5-4 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
@@ -18,7 +18,7 @@ require(deSolve)
 ```
 
 
-```{r, out.width="50%", echo=FALSE, fig.align='center'}
+```{r, out.width="50%", echo=FALSE, fig.align='left'}
 knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/f3-7-seirflows.png?raw=true")
 ```
 
@@ -26,12 +26,13 @@ knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/ma
 The basic equations for the flow of hosts between **S**usceptible, **E**xposed, **I**nfectious and **R**ecovered
  compartments are:
 
-\begin{align}
+$\begin{aligned}
     \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta (t)  I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\mu S}_{\mbox{dead}} \label{eq:sirs}\\
      \frac{dE}{dt} =& \underbrace{\beta (t) I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:sire}\\
      \frac{dI}{dt} =& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:siri}\\
      \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} \label{eq:sirr}
-\end{align}
+\end{aligned}$
+
 Infected individuals will remain in the latent class for an average period of $1/(\sigma + \mu)$ and
  subsequently (if they escape natural mortality at a rate $\mu$) enter the infectious class for 
  an average time of $1/(\gamma+\mu)$. Assuming sinusoidal forcing on the transmission rate $\beta(t) =  \beta_0 (1 + \beta_1 cos(2 \pi t))$; The mean transmission rate is $\beta_0$ but the realized transmission varies cyclically with a period of one time unit, and the magnitude of the seasonal variation is controlled by the parameter $\beta_1$.  Earn et al. (2000) provides a nice discussion of the model's application to historical measles dynamics.
