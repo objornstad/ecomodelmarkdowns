@@ -1,0 +1,166 @@
+---
+title: "Coupled Map Lattice model of larch budmoth"
+author: "Ottar N. Bjornstad"
+date: "6/27/2019"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Version 0.5.3 June 31, 2022 
+https://github.com/objornstad/
+
+This Rmarkdown of the Spatially-extended larch budmoth model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
+
+The app requires the shiny and plotly packages to be installed to run.
+
+The larch budmoth model developed in Turhin (2003) assumes an intrinisc rate of increase of the host ($r$) towards a carrying capacity ($K$) according to a logistic curve, random search by parasitoids with an assymptoting host escape probability of $-\exp(a P)/(1+\exp(a P))$) as a function of parasitoid density, where $a$ is parasitoid search efficiency and $w$ is scaling factor. The equations for the number of host, $H$, and parasitoids, $P$, in the next generation is then:
+\begin{eqnarray}
+&H_{t+1} & = \underbrace{H_t \exp(r (1-\frac{H_t}{K}))}_{\substack{\mbox{logistic larval} \\ \mbox{recruitment}}} \underbrace{(\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})}_{\substack{\mbox{density dependent} \\ \mbox{attack}}}\\
+&P_{t+1} & = H_t \exp(r (1-\frac{H_t}{K})) (1-\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})\\
+\end{eqnarray}
+
+The spatially extended coupled-map lattice model due to Bjornstad et al. (2002) rendered in the below interactive shinyApp was an attempt to understand the apparent wave-like spread of outbreaks of the larch budmoth with 10-year recurrences across the European Alps as shown in this animated gif:
+
+```{r, out.width="50%", echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/lbm.gif?raw=true")
+```
+
+The shinyApp (NB! to fully explore long-term patterns the number of generations to be simulated needs to be set to 500+ but renderiing those animations may require 10 seconds of patience):
+```{r, echo=FALSE, message=FALSE}
+require(shiny)
+require(plotly)
+
+
+# Define UI for slider demo app ----
+ui <- fluidPage(
+
+  # App title ----
+  titlePanel("Spatial parasitoid-host larch budmoth model"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar to demonstrate various slider options ----
+    sidebarPanel(
+
+  
+      sliderInput("dh", "Host dispersal:", 0.5,
+              min = 0, max = 1),
+      sliderInput("dp", "Parasitoid dispersal:", 0.5,
+              min = 0, max = 1),
+      sliderInput("R", "r:", 2,
+              min = 1, max = 5, step=0.1),
+      sliderInput("K", "Carrying capacity:", 250,
+              min = 100, max = 500),
+      sliderInput("w", "H-P Cconversio rate:", 0.13,
+              min = 0.01, max = 1),
+      sliderInput("a", "Parasitoid efficiency:", 1,
+              min = 0, max = 5),
+      numericInput("IT", "Generations:", 100,
+               min = 0, max = 1000)
+    ),
+
+    # Main panel for displaying outputs ----
+ mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotlyOutput("plot1", height = 500)),
+     tabPanel("Details", 
+     withMathJax(
+                helpText("MODEL:"),
+          helpText("Host equations -- see markdown text"),
+          helpText("Parasitoid -- see markdown text")))
+           )
+)
+)
+)
+# Define server logic for slider examples ----
+server <- function(input, output) {
+
+#xlen is width of the lattice (E-W)
+#ylen is height of the lattice (N-S)
+xlen = 30
+ylen = 30
+
+lbm.dyn <- function(h, p, r0 , K ,a , w, sigma, corr = 0.5){
+n <- length(h)
+if(sigma == 0){
+u <- 0
+v <- 0
+}
+else {
+v <- exp(rnorm(1, 0, sigma))
+u <- exp((1 - corr) * rnorm(n, 0, sigma) + corr * v)
+}
+hnew <- h * exp((r0+u)*(1 - h / K))*exp(- a * p / (1+a * w * p))
+pnew <- h * (1 - exp(- a * p / (1+a * w * p)))
+res<- list(h = hnew, p = pnew)
+res
+}
+
+xy = expand.grid(1:xlen, 1:ylen)
+dmat = as.matrix(dist(xy))
+xdif <- outer(xy[,1],xy[,1],"-")
+
+output$plot1 <- renderPlotly({
+dh=input$dh
+dp=input$dp
+adv=0
+#host advective component
+kha<-ifelse(dmat<1.5,dh/5,0)
+kha[xdif>0] <- 0
+diag(kha)<-1-dh
+
+#isotropic component
+khi<-ifelse(dmat<1.5,dh/8,0)
+diag(khi)<-1-dh
+
+#final host redistribution matrix
+kh<- adv*kha + (1-adv)*khi
+
+#parasitoid redistribution matrix (isotropic)
+kp<-ifelse(dmat<1.5,dp/8,0)
+diag(kp)<-1-dp
+
+IT = input$IT
+hmat = matrix(NA, nrow=xlen*ylen, ncol = IT)
+pmat = matrix(NA, nrow=xlen*ylen, ncol = IT)
+hmat[,1] <- c(abs(rnorm(xlen*ylen,mean=4,sd=1)))
+pmat[,1] <- c(abs(rnorm(xlen*ylen,mean=1,sd=1)))
+
+for(i in 2:IT){
+tmp <- lbm.dyn(hmat[,(i-1)], pmat[,(i-1)], r0 = input$R, K = input$K, a = input$a, w =
+input$w, sigma = 0, corr = 0.5)
+
+hmat[,i] <- tmp$h%*%kh; 
+pmat[,i] <- tmp$p%*%kp; 
+}
+
+hmat2=as.data.frame(hmat)
+hmat2$x=xy[,1]
+hmat2$y=xy[,2]
+longH=reshape(hmat2, direction="long", varying=1:IT, v.names="H")
+
+require(plotly)
+anim=ggplot(longH, aes(x=x, y=y, frame=longH$time))+geom_point(size=5*longH$H/max(longH))
+ggplotly(anim)
+})
+
+}
+
+# Create Shiny app ----
+shinyApp(ui, server, options = list(height = 750))
+```
+
+With default parameters but varying host and parasitiod mobility a rough map of the emergent spatiotemporal dynamics is:
+```{r, out.width="50%", echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/master/lbmmod.gif?raw=true")
+```
+
+REFERENCES:
+
+Bjørnstad, O. N., Peltonen, M., Liebhold, A. M., & Baltensweiler, W. (2002). Waves of larch budmoth outbreaks in the European Alps. Science, 298(5595), 1020-1023.
+
+Turchin, P. (2003) Complex Population Dynamics: A Theoretical/Empirical Synthesis. Princeton (NJ). Princeton University Press. Monographs in Population Biology.
