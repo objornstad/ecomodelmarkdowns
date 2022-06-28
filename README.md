@@ -33,6 +33,8 @@ sir.rmd - the unforced SIR model
 
 spatialparasitoidhost.rmd - Coupled map lattice model of spatially extended host-parasitoid dynamics
 
+spatiallbm.rmd - the spatially extended model of host-parasitoid dynamics that leads to waves of spread of the larch budmoth
+
 In addition I recommend taking a peak at: 
 
 SIR: https://martinkrz.github.io/posepi1/
