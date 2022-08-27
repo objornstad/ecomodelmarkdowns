@@ -5,16 +5,25 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-4 June 28, 2022 
+Version 0.5-5 Aug 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
-The app requires the shiny, deSolve and phaseR packages to be installed to run.
+The app requires the shiny and deSolve packages to be installed to run.
 
-```{r}
-require(shiny)
-require(deSolve)
+```{r, echo=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "deSolve")
 ```
 
 

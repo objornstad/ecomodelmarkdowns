@@ -5,16 +5,24 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-5 June 28, 2022 
+Version 0.5-8 August 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the Lotka-Volterra predation model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
 
 The app requires the shiny, deSolve and phaseR packages to be installed to run. 
 ```{r, echo=FALSE}
-require(shiny)
-require(deSolve)
-require(phaseR)
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "deSolve", "phaseR")
 ```
 
 The basic equations for the consumer-resource interaction between prey (N)  and predators (P) are:

@@ -1,16 +1,25 @@
 ---
 title: "Outbreak Response vaccination Desicion tool"
 author: "Ottar N. Bjornstad"
-date: "7/1/2019"
 output: html_document
 runtime: shiny
 ---
 
 ```{r, include=FALSE}
-require(deSolve)
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "deSolve")
 ```
 
-Version 0.5-8 June 28, 2022 
+Version 0.5-8 August 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of Outbreak Response Vaccination impact was written by Ottar N. Bjørnstad and Matt Ferrari and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of any update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019) and was motivated by the study of Grais et al. (2008).

@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-8 June 28, 2022 
+Version 0.5-8 August 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the seasonally forced temperature-dependent Tea tortrix DDE model (Nelson et al. 2013) was written by William A. Nelson and Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
@@ -21,9 +21,18 @@ Temperature is assumed to vary in a sinusoidal fashion around some mean and ampl
 
 The app requires the shiny and PBSddesolve packages to be installed to run. "Run document" in Rstudio will launch the App.
 
-```{r, include=FALSE}
-require(shiny)
-require(PBSddesolve)
+```{r, echo=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "PBSddesolve")
 ```
 
 The  shiny app:

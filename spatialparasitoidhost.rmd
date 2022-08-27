@@ -6,16 +6,26 @@ output: html_document
 runtime: shiny
 ---
 
-```{r setup, echo=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
-
 Version 0.5-4 June 28, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the Spatially-extended parasitoid-host Model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the "epimdr-package for the "Epidemics: Models and Data UseR book (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
 
 The app requires the shiny and plotly packages to be installed to run.
+
+```{r, echo=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "plotly")
+```
 
 The Nicholson-Bailey (1935) assumes random search by parasitoids (with a searching efficiency $a$) by the parasitoids. The probability of escaping parasitation is $\exp(-a P_t)$ and the number of host, $H$, and parasitoids, $P$, in the next generation is:
 

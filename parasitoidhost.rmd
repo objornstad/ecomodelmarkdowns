@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-8 June 28, 2022 
+Version 0.5-8 August 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-binomial (May 1978) parasitoid-host model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2019).
@@ -13,7 +13,17 @@ This Rmarkdown of Nicholson-Bailey (Nicholson and Bailey 1935) and negative-bino
 The app requires the shiny package to be installed to run. "Run document" in Rstudio will launch the App.
 
 ```{r, include=FALSE}
-require(shiny)
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny")
 ```
 
 The Nicholson-Bailey (1935) model assumes a population of randomly searching parasitoids, $P$, parasitizing immature stages of their host, $H$. The host growth rate is $R$ and the parasitoid search efficiency is $a$. Given the random search, the fraction of hosts escaping parasitization is $\mbox{exp}(- a P)$ leading to two equations: 

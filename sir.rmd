@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-8 June 28, 2022
+Version 0.5-8 August 27, 2022
 https://github.com/objornstad
 
 This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
@@ -13,9 +13,17 @@ This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is releas
 The app requires the shiny and deSolve packages to be installed to run.
 
 ```{r, echo=FALSE}
-require(shiny)
-require(deSolve)
-require(phaseR)
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "deSolve", "phaseR")
 ```
 
 ```{r, out.width="50%", echo=FALSE, fig.align='left'}

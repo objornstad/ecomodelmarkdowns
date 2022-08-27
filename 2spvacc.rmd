@@ -1,0 +1,186 @@
+---
+title: "Two species SIR model with vaccination"
+author: Ottar N. Bjørnstad
+output: html_document
+---
+
+
+This Rmarkdown is of a 2sp-SIR-with-vaccination model. 
+The vectored equations for the flow of hosts between **S**usceptible, **I**nfectious and **R**ecovered
+ compartments are:
+ 
+$\begin{aligned}
+    \frac{d \vec{S}}{dt} &= \underbrace{\mu \vec{N} (1-\vec{p})}_{\mbox{recruitment}} - \underbrace{\phi \vec{S}}_{\mbox{infection}} - \underbrace{\mu \vec{S}}_{\mbox{death}} \label{eq:sirs}\\
+    &\underbrace{\phi = \beta \times (\vec{I} / \vec{N})}_{\mbox{force of infection}}\\
+     \frac{d\vec{I}}{dt} &= \underbrace{\phi \vec{S}}_{\mbox{infection}} - \underbrace{\gamma \vec{I}}_{\mbox{recovery}} - \underbrace{\mu \vec{I}}_{\mbox{death}}  \label{eq:siri}\\
+     \frac{d\vec{R}}{dt} &= \underbrace{\gamma \vec{I}}_{\mbox{recovery}} - \underbrace{\mu \vec{R}}_{\mbox{death}} \label{eq:sirr}
+\end{aligned}$
+
+The transmission matrix $\beta$ is 2-by-2 where the diagonal is within species transmission and the off-diagonals are (possibly assymetric) cross-species transmission. The length-2 vectors, $\mu, p$ and $\gamma$ represents species-specific birth rates, vaccination-at-birth probabilities and recovery rates, respectively.
+
+```{r, echo=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("deSolve")
+```
+
+```{r}
+  #Gradient function;
+  twosp=function(t, x, parms){
+    S=x[1:2]
+    I=x[3:4]
+    R=x[5:6]
+
+    beta=parms$beta
+    mu=parms$mu
+    gamma=parms$gamma
+    N=parms$N
+    p=parms$p
+    phi = (beta %*% I)/N
+    dS = (1-p)*mu * N  - phi * S  - mu * S 
+    dI = phi * S - (mu + gamma) * I
+    dR = gamma * I - mu * R + p * R
+    res=c(dS, dI, dR)
+    list(res)
+  }
+```
+Define parameters and set up for solver:
+```{r}
+  times  = seq(0, 20, by=1/10)
+  parms  = list(mu = c(0.2, 0.1), N = c(1,1), 
+  beta =  matrix(c(3, 2, 
+                           1, 1), ncol=2, byrow=TRUE), 
+  gamma = c(1,1),
+  p=c(.1, 0))
+```
+Run solver:
+```{r}
+  start = c(S=c(0.999, 0.999), I=c(0.001, 0.001), R = c(0,0))
+ out=ode(y=start,  times=times, func=twosp, parms=parms)
+  out=as.data.frame(out)
+  matplot(out[,4:5])
+```
+
+Now set up for R0 next gen calc:
+
+```{r}
+nextgenR0=function(Istates, Flist, Vlist, params, dfe){
+paras = as.list(c(dfe, params)) 
+
+k=0
+vl=fl=list(NULL)
+for(i in 1:length(Istates)){
+assign(paste("f", i, sep = "."), lapply(lapply(Flist,deriv, Istates[i]), eval, paras))
+assign(paste("v", i, sep = "."), lapply(lapply(Vlist,deriv, Istates[i]), eval, paras))
+for(j in 1:length(Istates)){
+k=k+1
+fl[[k]]=attr(eval(as.name(paste("f", i, sep=".")))[[j]], "gradient")[1,]
+vl[[k]]=attr(eval(as.name(paste("v", i, sep=".")))[[j]], "gradient")[1,]
+}
+}
+
+f=matrix(as.numeric(as.matrix(fl)[,1]), ncol=length(Istates))
+v=matrix(as.numeric(as.matrix(vl)[,1]), ncol=length(Istates))
+R0=max(eigen(f%*%solve(v))$values)
+return(R0)
+}
+```
+
+
+Step 1: All states
+```{r}
+istates=c("I1", "I2")
+```
+Step 2: All new infections: 
+```{r}
+flist=c(dI1dt=quote(beta11 * S1 *(1-p1) * I1 / N1 + beta21 * S1 *(1-p1)* I2 / N1), dI2dt=quote(beta12 * S2*(1-p2) * I1 / N2 + beta22 * S2*(1-p2)* I2 / N2))
+```
+Step 3-5
+```{r}
+#All losses 
+Vm1=quote(mu1 * I1 + gamma1 * I1)
+Vm2=quote(mu2 * I2 + gamma2 * I2)
+
+#All gained transfers$
+Vp1=0
+Vp2=0
+#Subtract Vp from Vm
+V1=substitute(a-b, list(a=Vm1, b=Vp1))
+V2=substitute(a-b, list(a=Vm2, b=Vp2))
+#Make Vlist
+vlist = c(V1,V2)
+```
+Define list of parameter vectors:
+```{r}
+parms  = list(mu = c(0.2, 0.1), 
+  N = c(1,1), 
+  beta =  matrix(c(3, 2, 1, 1), ncol=2, byrow=TRUE), 
+  gamma = c(1,1),
+  p=c(0, 0))
+#Extract to work with nextgenR0:
+para = list(mu1 = parms$mu[1],
+    mu2 = parms$mu[2],
+    beta11 = parms$beta[1,1],
+    beta12 = parms$beta[1,2],
+    beta21 = parms$beta[2,1],
+    beta22 = parms$beta[2,2],
+    gamma1 = parms$gamma[1],
+    gamma2 = parms$gamma[2],
+    p1 = parms$p[1],
+    p2 = parms$p[2],
+    N1 = parms$N[1],
+    N2 = parms$N[2])
+```
+Specify disease-free equilibrium
+```{r}
+df = list(S1 = 1, S2 = 1, I1 = 0, I2 = 0)
+```
+Invoke R0 calculator:
+```{r}
+nextgenR0(Istates=istates, Flist=flist, Vlist=vlist, params=para, dfe=df)
+```
+
+
+This next section generates an $R_E$ surface assuming that only the core species is vaccinated. For simplicity back-spill rates ($\beta_{2,1}$) are assumed identical to the intraspecific rate ({\beta_{2,2}}$) in the peripheral host.
+
+```{r}
+parms  = list(mu = c(0.2, 0.1), 
+  N = c(1,1), 
+  beta =  matrix(c(3, 2, 1, 1), ncol=2, byrow=TRUE), 
+  gamma = c(1,1),
+  p=c(0, 0))
+#Extract to work with nextgenR0:
+para = list(mu1 = parms$mu[1],
+    mu2 = parms$mu[2],
+    beta11 = parms$beta[1,1],
+    beta12 = parms$beta[1,2],
+    beta21 = parms$beta[2,1],
+    beta22 = parms$beta[2,2],
+    gamma1 = parms$gamma[1],
+    gamma2 = parms$gamma[2],
+    p1 = parms$p[1],
+    p2 = parms$p[2],
+    N1 = parms$N[1],
+    N2 = parms$N[2])
+
+beta2=seq(0,1, by=.02)
+p=seq(0,1, by=0.02)
+RE=matrix(NA, ncol=length(beta2), nrow=length(p))
+for(i in 1:length(beta2)){
+  for(j in 1:length(p)){
+  para$p1=p[j]
+  para$beta21=para$beta21=beta2[i]
+  RE[i,j]=nextgenR0(Istates=istates, Flist=flist, Vlist=vlist, params=para, dfe=df)
+}
+}
+image(beta2, p, RE)
+contour(beta2, p, RE, levels=1:4, add=TRUE)
+```

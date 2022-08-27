@@ -1,23 +1,32 @@
 ---
 title: "Coupled Map Lattice model of larch budmoth"
 author: "Ottar N. Bjornstad"
-date: "6/28/2022"
 output: html_document
 runtime: shiny
 ---
 
-```{r setup, echo=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+```{r, echo=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "plotly")
 ```
 
-Version 0.5-4 June 28, 2022 
+Version 0.5-8 August 27, 2022 
 https://github.com/objornstad/
 
 This Rmarkdown of the Spatially-extended larch budmoth model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
 
 The app requires the shiny and plotly packages to be installed to run.
 
-The larch budmoth model developed in Turhin (2003) assumes an intrinisc rate of increase of the host ($r$) towards a carrying capacity ($K$) according to a logistic curve, random search by parasitoids with an assymptoting host escape probability of $-\exp(a P)/(1+\exp(a P))$) as a function of parasitoid density, where $a$ is parasitoid search efficiency and $w$ is scaling factor. The equations for the number of host, $H$, and parasitoids, $P$, in the next generation is then:
+The larch budmoth model developed in Turchin (2003) assumes an intrinisc rate of increase of the host ($r$) towards a carrying capacity ($K$) according to a logistic curve, random search by parasitoids with an assymptoting host escape probability of $-\exp(a P)/(1+\exp(a P))$) as a function of parasitoid density, where $a$ is parasitoid search efficiency and $w$ is scaling factor. The equations for the number of host, $H$, and parasitoids, $P$, in the next generation is then:
 
 $\begin{aligned}
 H_{t+1} & = \underbrace{H_t \exp(r (1-\frac{H_t}{K}))}_{\substack{\mbox{logistic larval} \\ \mbox{recruitment}}} \underbrace{(\frac{-\exp(a P_t)}{(1+\exp(a w P_t))})}_{\substack{\mbox{density dependent} \\ \mbox{attack}}}\\
@@ -32,10 +41,6 @@ knitr::include_graphics("https://github.com/objornstad/ecomodelmarkdowns/blob/ma
 
 The shinyApp (NB! to fully explore long-term patterns the number of generations to be simulated needs to be set to 500+ but renderiing those animations may require 10 seconds of patience):
 ```{r, echo=FALSE, message=FALSE}
-require(shiny)
-require(plotly)
-
-
 # Define UI for slider demo app ----
 ui <- fluidPage(
 
