@@ -238,59 +238,103 @@ Then I thought I'd see how far I could go in terms of making the calling syntax 
 This will only run on the latest R (4.1) because of the native pipes it uses in places.  It would be trivial to 
 remove those, but as you know I am addicted to pipes.  (I got absurdly excited about 4.1)."
 
-
 ```{r}
 stopifnot(getRversion()>="4.1")
 
+#' create a callable function of the Jacobian of some functions
+#' 
+#' @param .vars the variables, e.g. `c(x, y)` or `list(x, z)` or `x`
+#' @param ... the functions, possibly names, e.g. `sin(x), Z = cos(y/x)`. note:
+#'   these functions can have *other* variables as well (e.g. parameters that
+#'   will be supplied latter)
+#' 
+#' @return a function of .vars (and any other loose parameters), the Jacobian
+#' 
 Jacobian <- function (.vars, ...) {
-  vf <- substitute(list(...))[-1L]
+  # make a .vars into a character vector corresponding to the variables
   vars <- sapply(substitute(.vars),deparse)
+  # if present, get rid of a group operator (e.g., a `c(...)` or `list(...)`)
   if (length(vars)>1) vars <- vars[-1L]
-  sapply(
-    vars,
-    \(var) sapply(vf,D,name=var)
-  ) -> jac
-  dd <- c(length(vf),length(vars))
+  
+  # hold all the ... arguments (which should be function equations) as
+  # functions expressions
+  vf <- substitute(list(...))[-1L]
+  
+  # TODO at this point, should probably be doing a garbage-in check
+  
+  jac <- sapply(
+    vars, # for each of the variables ...
+    \(var) sapply(vf, D, name=var) # take all the derivatives (`D`) of the functions
+    # (uses the anonymous function form `\(argument) ... ops with argument ...`)
+  )
   dim(jac) <- NULL
+  # `jac` is "matrix" of (the Jacobian) function expressions at this stage
+  # though flattened into a single vector for use with latter steps
+  
+  # generally want the matrix structure, so store the dimensions to recreate it
+  dd <- c(length(vf), length(vars))
+  # along with names
   dn <- list(
     ifelse(
-      nzchar(names(vf)),
-      names(vf),
-      sapply(vf,deparse)
+      nzchar(names(vf)), # if vf has names ... 
+      names(vf), # use them
+      sapply(vf, deparse) # else, the functions as the names
     ),
-    vars
+    vars # use the variables as their names
   )
+  
+  # now turn that matrix of function expressions into a function that can be
+  # used
   fun <- function (...) {
-    e <- c(as.list(sys.frame(sys.nframe())),...)
-    J <- vapply(jac,eval,numeric(1L),envir=e)
-    dim(J) <- dd
-    dimnames(J) <- dn
-    J
+    # make an environment that combines the arguments of this function
+    # i.e., values for the variables in ...
+    # and expressions in jac (as well as other stuff needed for evaluating it)
+    e <- c(as.list(sys.frame(sys.nframe())), ...)
+    # evaluate all the elements of jac, using that environment, returning a
+    # numeric & shape that desired dimensions
+    J <- array(
+      vapply(X = jac, FUN = eval, FUN.VALUE = numeric(1L), envir = e),
+      dim = dd,
+      dimnames = dn
+    )
+    return(J)
   }
+  
+  # turn the ... in `fun` into a normal list of variables, corresponding
+  # to the known variables (.vars / vars)
   formals(fun) <- eval(
     parse(text=paste0("alist(",paste0(c(vars,"..."),"=",collapse=","),")"))
   )
-  fun
+  
+  return(fun)
+  
 }
+
 ```
 
 Some examples:
 ```{r}
+# no extra parameters, just the basic demonstration
 Jacobian(c(x,y),sin(x),cos(x),atan(y/x),tan(x+y)) -> f
 f(y=2,x=3)
 ```
 
 ```{r}
+# presumably showing off how generic `D` is
 Jacobian(x,sin(x),cos(x),atan(y/x),tan(x+y),factorial(x)) -> f
 f(x=3,y=2)
 ```
 
 ```{r}
+# using (some) named dimensions for the functions
 Jacobian(c(x,y),A=sin(x),B=cos(x),atan(y/x),D=tan(x+y),factorial(x)) -> f
 f(y=3,x=2)
 ```
 
 ```{r}
+# using pipe, and providing functions as "equations" (i.e., leveraging named arguments)
+# and having parameters in those functions (which are there to bound later with actual
+# values
 c(S,I,R) |>
   Jacobian(
     dSdt=mu*(S+I+R)-beta*S*I/(S+I+R)-mu*S,
@@ -299,6 +343,10 @@ c(S,I,R) |>
   ) -> f
 f
 f(S=0.99,I=0.01,R=0,mu=0.02,beta=400,gamma=26,alpha=1)
+
+# so Jacobian above isn't quite clever enough to do the normal
+# R function defaults can use other named arguments, hence the
+# `with` wrapper
 with(
   list(gamma=26,beta=400,alpha=1,mu=0.02),
   f(
