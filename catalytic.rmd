@@ -1,0 +1,202 @@
+---
+title: "Catalytic model with ShinyApp"
+author: Ottar N. Bjørnstad
+output: html_document
+runtime: shiny
+---
+
+Version 0.5-8 May 28, 20223 https://github.com/objornstad
+
+This Rmarkdown of the catalytic model was written by Reilly Mummah and  Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+
+The app requires the shiny, ggplot2 and epimdr2 packages to be installed to run.
+
+```{r, echo=FALSE, message=FALSE}
+using<-function(...) {
+    libs<-unlist(list(...))
+    req<-unlist(lapply(libs,require,character.only=TRUE))
+    need<-libs[req==FALSE]
+    if(length(need)>0){ 
+        install.packages(need)
+        lapply(need,require,character.only=TRUE)
+    }
+}
+
+using("shiny", "ggplot2", "epimdr2")
+```
+
+The catalytic model calculates and predicts age accumulation of exposure to pathogens. Data can either be of presence of persitent infections or age-seroprevalence. The force of infection, $\phi$, is the rate at which susceptible individuals are exposed to infection, thus if age-invariant in a randomly mixing population the waiting time to first infection is exponentially distributed with a mean age of infection of $1/\phi$. For endemic, fully immunizing infections in a constant-sized host population, the basic reproduction number ($R_0$) relates to the mean age of infection ($\bar{a}$) according to $R_0 \simeq 1+ L/\bar{a}$ where $L$ is the life expectancy. In the simplest case were $\phi$ is independent of both age and time the probability of having been infected by age $a$ is $1-\exp(- \phi a)$. 
+Assuming some $n_a$ individuals of age $a$ reveal from serology or colonization of persistent infections that $y_a$ individuals have been previously infected,inferring the $\phi$ is a standard generalized linear binomial regression problem: $p(a)=1-exp(- \phi a)$ is the expected fraction infected (or seropositive) by age $a$. Thus $\log(-\log(1-p(a)))=\log(\phi)+\log(a)$, so the age-invariant log-FoI is the intercept from a \texttt{glm} with binomial error, a complimentary log-log link and log-age as a regression ``offset.'' The **R**  call will be of the form:
+
+```{r, eval=FALSE, tidy=FALSE}
+glm(cbind(positive, negative) ~ offset(log(a)), 
+     family = binomial(link = "cloglog")) 
+```
+
+### MEASLES
+ 
+The prevaccination Measles antibody data of \cite{black1959} represent seroprevalence-by-age of some 300 people from New Haven, Connecticut from blood drawn in the summer of 1957. 
+The age profile of seroprevalence takes the characteristic shape of high seroprevalence of the very young ($< 1$ year) due to maternal antibodies that wanes with age, followed by build-up of immunity to almost 100\% seroprevalence by age 20.
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+ui <- pageWithSidebar(
+headerPanel(""),
+#The sidebar for parameter input
+sidebarPanel(
+#Sliders:
+sliderInput("R0", "R0:", 5,
+              min = 0, max = 20),
+#sliderInput("phi", "FoI:", 5,
+#              min = 0, max = 20),
+sliderInput("L", "Life expetancy", 70,
+              min = 1, max = 100)),
+#Main panel for figures and equations
+mainPanel(
+  #Multiple tabs in main panel
+  tabsetPanel(
+      #Tab 1: 
+      tabPanel("Curve", plotOutput("plot1", height = 500)), 
+      #Tab 2
+      tabPanel("Best fit", plotOutput("plot2", height = 500)),
+      tabPanel("Equations", 
+           withMathJax(
+            helpText("Mean age of Infection MAI $$\\bar{a}=\\frac{L}{R_0-1}$$"),
+            helpText("Force of Infection $$\\phi=\\frac{R_0-1}{L}$$"),
+            helpText("Equilibrium suceptible fraction $$\\bar{S}=\\frac{1}{R_0}$$"),
+           helpText("With infectious period $1/\\gamma$ Equilibrium infected fraction is $$\\bar{I}=  \\frac{1}{\\gamma+\\mu} \\frac{\\beta N}{N}$$")       
+           )))
+      )) #End of ui()
+
+
+# This creates the 'behind the scenes' code (Server)
+server <- function(input, output) {
+ #Plot1: renderPlot to be passed to UI tab 1
+  output$plot1 <- renderPlot({
+ phi=(input$R0-1)/input$L
+ mai=1/phi
+  curve(1 - exp(-phi * x), from = 0, to = input$L, 
+     ylab = "Seroprevalence", xlab = "Age")
+  b2 = black[-c(1, 8, 9), ]  #subsetting age brackets
+points(black$mid, black$f, pch = "*", col = "red")
+points(x = b2$mid, y = b2$f, pch = 8)
+title(paste("Foi = ", round(phi, 3), " MAI = ", round(mai,2)))
+ })
+
+ #Plot2: renderPlot to be passed to UI tab 2
+  output$plot2 <- renderPlot({
+b2 = black[-c(1, 8, 9), ]  #subsetting age brackets
+#Estimate log-FoI
+fit = glm(cbind(pos,neg) ~ offset(log(mid)), 
+    family = binomial(link = "cloglog"), data = b2)
+#Plot predicted and observed
+phi = exp(coef(fit))
+curve(1 - exp(-phi * x), from = 0, to = 60, 
+     ylab = "Seroprevalence", xlab = "Age")
+points(black$mid, black$f, pch = "*", col = "red")
+points(x = b2$mid, y = b2$f, pch = 8)
+phi
+mai=1/phi
+title(paste("Foi = ", round(phi, 3), " MAI = ", mai))
+   })
+  } #End of server()
+
+shinyApp(ui, server, options = list(height = 500))
+```
+
+
+The best estimated FoI is 0.16/year, giving a predicted mean age of infection of 6 years and $R_0$ estimate of 12.2.
+
+
+### *BORDETELLA BRONCHISEPTICA* IN RABBITS
+
+*Bordetella bronchiseptica* in a rabbit breeding facility provides an illustration. *B. bronchiseptica* is a non-immunizing, largely avirulent (though it can cause snuffles), persistent infection of rabbits. The motivation for the study was to better understand which age groups are most involved in the circulation of the pathogen. Two-hundred-and-fourteen rabbits of known age (in months) were swabbed nasally and tested for the bacterium. Grainna Longs data on age-prevalence, Rielly Mummah wrote the following lovely interactive shinyApp to study how age-specific data influence estimates of MAI, FoI and R_0. Selecting and toggling various data points reveals their influence on the estimates.
+
+```{r, echo=FALSE}
+# This creates the User Interface (UI)
+require(shiny)
+require(ggplot2)
+require(epimdr2)
+
+# This creates the User Interface (UI)
+ui <- fluidPage(
+    fluidRow(
+      column(width = 10,
+         plotOutput("plot1", height = 600,
+                    click = "plot1_click",
+                    brush = brushOpts(
+                      id = "plot1_brush"
+                    )
+         ),
+         actionButton("exclude_toggle", "Toggle points"),
+         actionButton("exclude_reset", "Reset"),
+         sliderInput("L", "Life expetancy", 12,
+              min = 2, max = 24)
+      )))
+
+rabbits <- epimdr2::rabbit
+rabbits$notinf <- rabbits$n-rabbits$inf
+rabbits$perinf <- rabbits$inf/rabbits$n
+fit <- glm(cbind(inf, notinf)~offset(log(a)), family=binomial(link="cloglog"),
+           data=rabbits)
+phi <- exp(coef(fit))
+
+# This creates the 'behind the scenes' code (Server)
+server <- function(input, output) {
+  # For storing which rows have been excluded
+  vals <- reactiveValues(
+    keeprows = rep(TRUE, nrow(rabbits))
+  )
+ 
+  
+# Toggle points that are clicked
+  observeEvent(input$plot1_click, {
+    res <- nearPoints(rabbits, input$plot1_click, allRows = TRUE)
+    
+    vals$keeprows <- xor(vals$keeprows, res$selected_)
+  })
+  
+# Toggle points that are brushed, when button is clicked
+  observeEvent(input$exclude_toggle, {
+    res <- brushedPoints(rabbits, input$plot1_brush, allRows = TRUE)
+    
+    vals$keeprows <- xor(vals$keeprows, res$selected_)
+  })
+
+# Reset all points
+  observeEvent(input$exclude_reset, {
+    vals$keeprows <- rep(TRUE, nrow(rabbits))
+  })
+  
+ 
+  output$plot1 <- renderPlot({
+    # Plot the kept and excluded points as two separate data sets
+    keep    <- rabbits[ vals$keeprows, , drop = FALSE]
+    exclude <- rabbits[!vals$keeprows, , drop = FALSE]
+
+    fit <- glm(cbind(inf, notinf)~offset(log(a)), family=binomial(link="cloglog"),
+               data=keep)
+    phi <- exp(coef(fit))
+    meanage <- 1/phi
+    L=12
+    R0=1+input$L/meanage
+    ggplot(keep, aes(x=a,y=perinf)) + geom_point(aes(size=n)) + 
+      scale_size(range=c(0,35)) + theme_bw() + labs(x='Age',y='Prevalence') +
+      geom_point(data=exclude,shape=21,fill=NA,color="black",alpha=0.25) +
+      stat_function(fun=function(x) 1-exp(-phi*x),linetype='dashed') + 
+      geom_vline(xintercept=meanage,linetype='dashed',color='red') +
+      scale_x_continuous(breaks = 1:30)+ggtitle(paste("FoI = ", round(phi, 3), "MAI = ", round(meanage, 1), " R0 = ", round(R0,1))) 
+  })
+ }
+
+shinyApp(ui, server, options = list(height = 770))
+```
+
+
+
+References:
+
+Bjørnstad, O. N. 2023. Epidemics: Models and Data using R 2nd edition. Springer (387 pp) ISBN 978-3-031-12055-8 https://www.springer.com/gp/book/9783319974866
+
+Long, G.H, Sinha, D., Read, A.F., Pritt, S., Kline, B., Harvill, E.T., Hudson, P.J and Bjørnstad, O.N. 2010. Identifying the Age Cohort responsible for Bordetella bronchiseptica Transmission in a Natural Rabbit Outbreak. PLoS Pathogens 6(12): e1001224. doi:10.1371/journal.ppat.1001224.
+
