@@ -7,7 +7,7 @@ runtime: shiny
 
 Version 0.5-8 May 28, 20223 https://github.com/objornstad
 
-This Rmarkdown of the catalytic model was written by Reilly Mummah and  Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
+This Rmarkdown of the catalytic model was written by Riley Mummah and  Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, ggplot2 and epimdr2 packages to be installed to run.
 
@@ -110,7 +110,7 @@ The best estimated FoI is 0.16/year, giving a predicted mean age of infection of
 
 ### *BORDETELLA BRONCHISEPTICA* IN RABBITS
 
-*Bordetella bronchiseptica* in a rabbit breeding facility provides an illustration. *B. bronchiseptica* is a non-immunizing, largely avirulent (though it can cause snuffles), persistent infection of rabbits. The motivation for the study was to better understand which age groups are most involved in the circulation of the pathogen. Two-hundred-and-fourteen rabbits of known age (in months) were swabbed nasally and tested for the bacterium. Grainna Longs data on age-prevalence, Rielly Mummah wrote the following lovely interactive shinyApp to study how age-specific data influence estimates of MAI, FoI and R_0. Selecting and toggling various data points reveals their influence on the estimates.
+*Bordetella bronchiseptica* in a rabbit breeding facility provides an illustration. *B. bronchiseptica* is a non-immunizing, largely avirulent (though it can cause snuffles), persistent infection of rabbits. The motivation for the study was to better understand which age groups are most involved in the circulation of the pathogen. Two-hundred-and-fourteen rabbits of known age (in months) were swabbed nasally and tested for the bacterium. Grainna Longs data on age-prevalence, Riley Mummah wrote the following lovely interactive shinyApp to study how age-specific data influence estimates of MAI, FoI and R_0. Selecting and toggling various data points reveals their influence on the estimates.
 
 ```{r, echo=FALSE}
 # This creates the User Interface (UI)
