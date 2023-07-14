@@ -9,7 +9,7 @@ catalytic.rmd -- Simmple exploration of the catalytic model using rabitt data
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
 
-jacobian.rmd - General purpose Jacobian calculator(s) (not shiny App)
+jacobian.rmd - General purpose Jacobian R calculators (not shiny App)
 
 lotkavolterracompetition.rmd - Lotka-Volterra competion model
 
