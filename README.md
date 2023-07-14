@@ -5,7 +5,7 @@ Stand alone markdowns with embedded shiny apps for various eco and epi models
 Current markdowns (May 28, 2023) are:
 _____
 
-catalytic.rmd -- Simmple exploration of the catalytic mode
+catalytic.rmd -- Simmple exploration of the catalytic model using rabitt data
 
 ddetortrix.rmd - Nelson et al's (2013) model of temperature dependent destabilization of insect dynamics
 
