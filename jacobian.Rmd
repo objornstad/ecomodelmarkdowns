@@ -1,13 +1,13 @@
 ---
 title: "Jacobian"
 author: "Ottar N. Bjornstad and Aaron King"
-date: "06/28/2022"
+date: "07/14/2023"
 output:
   html_document: default
 ---
 
 
-Version 0.5-8 June 28, 2022
+Version 0.5-9 Jul 14, 2023
 https://github.com/objornstad
 
 This Rmarkdown of a general purpose jacobian calculator was written by Ottar N. Bjørnstad and Aaron King is released with a CC-BY-NC lisence 
@@ -227,6 +227,10 @@ Equilibrium is an unstable focus with damping period of:
 ```
 
 _______
+AARONS FIRST TINKER:
+
+
+_______
 MORE EXAMPLES with Aarons one-upmanship:
 "I can see how useful it will be.  This kind of programming in R seems unavoidably tortuous, but it is amazing 
 how far one can push things in the general lisp-like structure of R.
@@ -274,40 +278,129 @@ Jacobian <- function (.vars, ...) {
 }
 ```
 
-Some examples:
-```{r}
-Jacobian(c(x,y),sin(x),cos(x),atan(y/x),tan(x+y)) -> f
+Alternatively, we may wish to have a function which evaluates the Jacobian at a specified point.
+The following function returns such a function.
+It makes use of non-standard evaluation and the function-associated environment feature of **R**.
+
+```{r Jacobian2}
+
+Jacobian <- function (..., variables) {
+  vf <- substitute(list(...))[-1L]
+  if (missing(variables)) {
+    vars <- all.vars(vf)
+  } else {
+    vars <- sapply(substitute(variables),deparse)
+    if (length(vars)>1) vars <- vars[-1L]
+  }
+  sapply(
+    vars,
+    function (var) sapply(vf,D,name=var)
+  ) -> jac
+  dd <- c(length(vf),length(vars))
+  dim(jac) <- NULL
+  dn <- list(
+    ifelse(
+      nzchar(names(vf)),
+      names(vf),
+      sapply(vf,deparse)
+    ),
+    vars
+  )
+  fun <- function (...) {
+    e <- c(as.list(sys.frame(sys.nframe())),...)
+    J <- vapply(jac,eval,numeric(1L),envir=e)
+    dim(J) <- dd
+    dimnames(J) <- dn
+    J
+  }
+  formals(fun) <- eval(
+    parse(text=paste0("alist(",paste0(c(vars,"..."),"=",collapse=","),")"))
+  )
+  fun
+}
+
+```
+
+```{r Jacobian2-1,eval=(getRversion()>="4.1")}
+
+Jacobian(sin(x),cos(x),atan(y/x),tan(x+y)) -> f
+f
+try(f())
+f(3,2)
 f(y=2,x=3)
-```
 
-```{r}
 Jacobian(x,sin(x),cos(x),atan(y/x),tan(x+y),factorial(x)) -> f
+f
+try(f(x=3))
 f(x=3,y=2)
-```
 
-```{r}
-Jacobian(c(x,y),A=sin(x),B=cos(x),atan(y/x),D=tan(x+y),factorial(x)) -> f
+Jacobian(
+  variables=c(x,y),
+  A=sin(x),
+  B=cos(x),
+  atan(y/x),
+  D=tan(x+y),
+  `x!`=factorial(x)
+) -> f
 f(y=3,x=2)
 ```
 
-```{r}
-c(S,I,R) |>
-  Jacobian(
-    dSdt=mu*(S+I+R)-beta*S*I/(S+I+R)-mu*S,
-    dIdt=beta*S*I/(S+I+R)-gamma*I-(mu+alpha)*I,
-    dRdt=gamma*I-mu*R
-  ) -> f
+### SIR example:
+```{r eval=(getRversion()>="4.1")}
+Jacobian(
+  dSdt=mu*(S+I+R)-beta*S*I/(S+I+R)-mu*S,
+  dIdt=beta*S*I/(S+I+R)-gamma*I-(mu+alpha)*I,
+  dRdt=gamma*I-mu*R,
+  variables=c(S,I,R)
+) -> f
+
 f
+try(f(S=0.99,I=0.01,R=0))
 f(S=0.99,I=0.01,R=0,mu=0.02,beta=400,gamma=26,alpha=1)
+
 with(
   list(gamma=26,beta=400,alpha=1,mu=0.02),
   f(
     S=(gamma+mu)/beta,
     I=(1-(gamma+mu)/beta)*mu/(gamma+mu),
     R=(1-(gamma+mu)/beta)*gamma/(gamma+mu),
-    mu=0.02,beta=400,gamma=26,alpha=1
+    mu=mu,beta=beta,gamma=gamma,alpha=alpha
   )
 )|>
-  eigen()
-
+  eigen() |>
+  getElement("values")
 ```
+
+By default, we take derivatives with respect to all variables in the vectorfield expression.
+
+```{r}
+Jacobian(
+  dSdt=mu*(S+I+R)-beta*S*I/(S+I+R)-mu*S,
+  dIdt=beta*S*I/(S+I+R)-gamma*I-(mu+alpha)*I,
+  dRdt=gamma*I-mu*R
+) -> f
+f
+f(S=0.99,I=0.01,R=0,mu=0.02,beta=400,gamma=26,alpha=1)
+```
+
+### Rosenzweig-MacArthur example:
+
+```{r}
+Jacobian(
+  dN = r*N*((K-N)/K) - a*N*P/(c+N),
+  dP = b*N*P/(c+N) - g*P,
+  variables=c(N,P)
+) -> f
+
+with(
+  list(r=0.1,K=90,a=0.2,c=20,b=0.1,g=0.05),
+  f(
+    r=r,K=K,a=a,c=c,b=b,g=g,
+    N=g*c/(b-g),
+    P=(r-r*g*c/(b-g)/K)*(c+g*c/(b-g))/a)
+) |>
+  eigen() |>
+  getElement("values")
+    
+ ```
+ 
