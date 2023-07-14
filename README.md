@@ -2,7 +2,7 @@
 
 Stand alone markdowns with embedded shiny apps for various eco and epi models
 
-Current markdowns (May 28, 2023) are:
+Current markdowns (July 14, 2023) are:
 _____
 
 catalytic.rmd -- Simmple exploration of the catalytic model using rabitt data
