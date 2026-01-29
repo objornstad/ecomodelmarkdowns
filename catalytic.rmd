@@ -1,17 +1,19 @@
 ---
 title: "Catalytic model with ShinyApp"
-author: Ottar N. Bjørnstad
+author: Riley Mummah and Ottar N. Bjørnstad
 output: html_document
 runtime: shiny
 ---
 
-Version 0.5-8 May 28, 20223 https://github.com/objornstad
+Version 0.5-9 June 7, 20223 
+https://github.com/objornstad
 
 This Rmarkdown of the catalytic model was written by Riley Mummah and  Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu).
 
 The app requires the shiny, ggplot2 and epimdr2 packages to be installed to run.
 
 ```{r, echo=FALSE, message=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 using<-function(...) {
     libs<-unlist(list(...))
     req<-unlist(lapply(libs,require,character.only=TRUE))

@@ -13,6 +13,7 @@ This Rmarkdown of the Rosenzweig-MacArthur predator-prey model was written by Ot
 The app requires the shiny and deSolve packages to be installed to run. 
 
 ```{r, echo=FALSE, include=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 using<-function(...) {
     libs<-unlist(list(...))
     req<-unlist(lapply(libs,require,character.only=TRUE))

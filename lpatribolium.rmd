@@ -5,13 +5,14 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-8 August 27, 2022 
+Version 0.5-10 January 29, 2026 
 https://github.com/objornstad/
 
 This Rmarkdown of the LPA tribolium was written by Ottar N. Bjørnstad and is released with a CC-BY-NC license for anyone to improve and re-share (acknowledging origin). Please email me a copy if you make an update (onb1 at psu dot edu).
 
 The app requires the shiny and sctterplot3d packages to be installed to run. 
 ```{r, echo=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 using<-function(...) {
     libs<-unlist(list(...))
     req<-unlist(lapply(libs,require,character.only=TRUE))

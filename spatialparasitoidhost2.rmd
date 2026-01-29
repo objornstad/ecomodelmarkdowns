@@ -1,0 +1,158 @@
+---
+title: "Parasitoid-host Coupled Map Lattice model"
+author: "Ottar N. Bjornstad"
+date: "10/06/2019"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Version 0.1-2 October 6, 2019 
+https://github.com/objornstad/
+
+This Rmarkdown of the Spatially-extewnded parasitoid-host Model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). 
+
+The app requires the shiny and plotly packages to be installed to run.
+
+The (isotropic & homogenous) Parasitoid-Host model studied by Bjornstad et al. (2002) is a spatially-extended version of the model of Turchin (2003) which asssumes density dependent growth by the host with a mean growth rate R and carrying capacity, K, random search with interference competition by parasitoids (with a searching efficiency $a$) by the parasitoids. The probability of escaping parasitation is $\exp[-a P_t /(1+a w P_t)]$ and the number of host, $H$, and parasitoids, $P$, in the next generation is:
+\begin{eqnarray}
+&H_{t+1} & = R H_t \exp[-a P_t /(1+a w P_t)]\\
+&P_{t+1} & = R H_t (1-\exp[-a P_t /(1+a w P_t)]),
+\end{eqnarray}
+To allow for Moran effect and stochastic growth the growth rate can have a noise variance of $\sigma$ and regional correlation of $\rho$. 
+
+The spatially-extended version of the model which asssumes a lattice landscape where a fraction of hosts ($\Delta H$) and parasitoids ($\Delta P$) disperse to neighboring patches between each generation. The result is a range of emergent spatiotemporal dynamics including spiral waves, spatial chaos and Turing crystals. 
+
+```{r, echo=FALSE, message=FALSE}
+require(shiny)
+require(plotly)
+
+
+# Define UI for slider demo app ----
+ui <- fluidPage(
+
+  # App title ----
+  titlePanel("Sliders"),
+
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+
+    # Sidebar to demonstrate various slider options ----
+    sidebarPanel(
+
+  
+      sliderInput("Dh", "Host dispersal:", 0.5,
+              min = 0, max = 1),
+      sliderInput("Dp", "Parasitoid dispersal:", 0.5,
+              min = 0, max = 1),
+      sliderInput("K", "Host Carrying Capacity:", 250,
+              min = 10, max = 500),
+      sliderInput("sigma", "Stochasticity in growth:", 0,
+              min = 0, max = 1, step=0.1),
+      sliderInput("corr", "Correlation in growth:", 0,
+              min = 0, max = 1, step=0.1),
+      sliderInput("R", "Host growth:", 2,
+              min = 1, max = 5, step=0.1),
+      sliderInput("a", "Parasitoid efficiency:", 1,
+              min = 0, max = 5),
+      numericInput("IT", "Generations:", 100,
+               min = 0, max = 1000)
+    ),
+
+    # Main panel for displaying outputs ----
+ mainPanel(tabsetPanel(
+  tabPanel("Simulation", plotlyOutput("plot1", height = 500)),
+     tabPanel("Details", 
+     withMathJax(
+                helpText("MODEL:"),
+          helpText("Host $$ $$"),
+          helpText("Parasitoid $$ $$")))
+           )
+)
+)
+)
+# Define server logic for slider examples ----
+server <- function(input, output) {
+
+#xlen is width of the lattice (E-W)
+#ylen is height of the lattice (N-S)
+xlen = 30
+ylen = 30
+
+hp.dyn <- function(h, p, r0, K = 250, a = 2.5, w = 0.17, sigma =
+0, corr = 0.5){
+#This is the function to do the stochastic host-parastoid growth. 
+#r0 is the host growth rate, beta is parasitoid efficiency, 
+#gamma is host dd
+#sigma is the environmental stochasticity
+#corr is the environmental correlation
+	n <- length(h)
+	if(sigma == 0){
+		u <- 0
+		v <- 0
+	}
+	else {
+		v <- exp(rnorm(1, 0, sigma))
+		u <- exp((1 - corr) * rnorm(n, 0, sigma) + corr * v)
+	}
+	hnew <- h * exp((r0+u)*(1 - h / K))*exp(- a * p / (1+a * w * p))
+	pnew <- h * (1 - exp(- a * p / (1+a * w * p)))
+	res<- list(h = hnew, p = pnew)
+	res
+}
+
+xy = expand.grid(1:xlen, 1:ylen)
+dmat = as.matrix(dist(xy))
+
+
+  # Show the values in an HTML table ----
+output$plot1 <- renderPlotly({
+kh = ifelse(dmat<1.5,input$Dh/8,0)
+kp = ifelse(dmat<1.5,input$Dp/8,0)
+diag(kh) = 1-input$Dh
+diag(kp) = 1-input$Dp
+
+IT = input$IT
+hmat = matrix(NA, nrow=xlen*ylen, ncol = IT)
+pmat = matrix(NA, nrow=xlen*ylen, ncol = IT)
+hmat[,1] = 0
+pmat[,1] = 0
+hmat[23,1] = 4
+pmat[23,1] = 1
+
+for(i in 2:IT){
+   #growth
+tmp <- hp.dyn(hmat[,(i-1)], pmat[,(i-1)], r0 = input$R, K = input$K, a = input$a, w =
+0.13, sigma = input$sigma, corr = input$corr)
+#   tmp = hp.dyn(h = hmat[,(i-1)], p = pmat[,(i-1)], 
+#      R = input$R, a = input$a)
+   #redistribution
+   hmat[,i] = tmp$h%*%kh;
+   pmat[,i] = tmp$p%*%kp;
+}
+
+hmat2=as.data.frame(hmat)
+hmat2$x=xy[,1]
+hmat2$y=xy[,2]
+longH=reshape(hmat2, direction="long", varying=1:IT, v.names="H")
+
+require(plotly)
+anim=ggplot(longH, aes(x=x, y=y, frame=longH$time))+geom_point(size=4*longH$H/input$K)
+ggplotly(anim)
+})
+
+}
+
+# Create Shiny app ----
+shinyApp(ui, server, options = list(height = 900))
+```
+
+
+REFERENCES:
+
+Bjørnstad, O. N., Peltonen, M., Liebhold, A. M., & Baltensweiler, W. (2002). Waves of larch budmoth outbreaks in the European Alps. Science, 298(5595), 1020-1023.
+
+Turchin, P. (2003). Complex population dynamics: a theoretical/empirical synthesis (Vol. 35). Princeton university press.

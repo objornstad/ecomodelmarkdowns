@@ -13,6 +13,7 @@ This Rmarkdown of the seasonally forced SEIR model was written by Ottar N. Bjør
 The app requires the shiny and deSolve packages to be installed to run.
 
 ```{r, echo=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 using<-function(...) {
     libs<-unlist(list(...))
     req<-unlist(lapply(libs,require,character.only=TRUE))
@@ -36,10 +37,10 @@ The basic equations for the flow of hosts between **S**usceptible, **E**xposed, 
  compartments are:
 
 $\begin{aligned}
-    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta (t)  I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\mu S}_{\mbox{dead}} \label{eq:sirs}\\
-     \frac{dE}{dt} =& \underbrace{\beta (t) I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:sire}\\
-     \frac{dI}{dt} =& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu I}_{\mbox{dead}}  \label{eq:siri}\\
-     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}} \label{eq:sirr}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta (t)  I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\mu S}_{\mbox{dead}}\\
+     \frac{dE}{dt} =& \underbrace{\beta (t) I \frac{S}{N}}_{\mbox{infected}} - \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\mu I}_{\mbox{dead}}\\
+     \frac{dI}{dt} =& \underbrace{\sigma E}_{\mbox{infectious}} - \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu I}_{\mbox{dead}}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovered}} - \underbrace{\mu R}_{\mbox{dead}}
 \end{aligned}$
 
 Infected individuals will remain in the latent class for an average period of $1/(\sigma + \mu)$ and

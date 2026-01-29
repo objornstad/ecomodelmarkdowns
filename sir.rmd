@@ -5,7 +5,7 @@ output: html_document
 runtime: shiny
 ---
 
-Version 0.5-9 May 28, 2022
+Version 0.5-10 Jan 29, 2026
 https://github.com/objornstad
 
 This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is released with a CC-BY-NC lisence for anyone to improve and re-share (acknowledging origin). Please email me a copy of update (onb1 at psu dot edu). The app was originally developed as part of the epimdr-package (https://cran.r-project.org/package=epimdr; Bjørnstad 2018).
@@ -13,6 +13,7 @@ This Rmarkdown of the SIR model was written by Ottar N. Bjørnstad and is releas
 The app requires the shiny and deSolve packages to be installed to run.
 
 ```{r, echo=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 using<-function(...) {
     libs<-unlist(list(...))
     req<-unlist(lapply(libs,require,character.only=TRUE))
@@ -34,9 +35,9 @@ The basic equations for the flow of hosts between **S**usceptible, **I**nfectiou
  compartments are:
  
 $\begin{aligned}
-    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}} \label{eq:sirs}\\
-     \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}  \label{eq:siri}\\
-     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}} \label{eq:sirr}
+    \frac{dS}{dt} =& \underbrace{\mu N}_{\mbox{birth}} - \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\mu S}_{\mbox{death}}\\
+     \frac{dI}{dt} =& \underbrace{\beta I \frac{S}{N}}_{\mbox{infection}} - \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu I}_{\mbox{death}}\\
+     \frac{dR}{dt} =& \underbrace{\gamma I}_{\mbox{recovery}} - \underbrace{\mu R}_{\mbox{death}}
 \end{aligned}$
 
 The assumptions of this version of the SIR model are:
